@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # v1.0.3
 
 1.0.3 (2025-09-25)
@@ -41,3 +42,12 @@ Hotfix Release
 Hotfix Release
 
 - updated pipelines [1014e4e](https://github.com/varuncoderise/demo-public/commit/1014e4e)
+=======
+# v1.0.0.0
+
+1.0.0.0 (2025-09-24)
+
+Initial Release
+
+- No changes recorded for this release
+>>>>>>> 85dda2c (update changelog for v1.0.0.0)
