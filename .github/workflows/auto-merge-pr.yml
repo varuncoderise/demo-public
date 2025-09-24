@@ -35,6 +35,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
           base: prod-release/public
-          head: release/4x
+          branch: release/4x
           title: "Sync release/4x into prod-release/public"
           body: "Automated PR: Sync changes from internal repo main branch"
+          update-branch: true
