@@ -13,8 +13,8 @@ permissions:
 env:
   DEFAULT_TAG: v1.0.0.0
   TIMEZONE: Asia/Kolkata
-  BOT_NAME: coderiseio-bot
-  BOT_EMAIL: coderiseio@bot.com
+  BOT_NAME: test-bot
+  BOT_EMAIL: test@bot.com
   REPO: ${{ github.repository }}
 
 jobs:
