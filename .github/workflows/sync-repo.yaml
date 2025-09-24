@@ -1,71 +1,33 @@
 name: Sync to Public Repo
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   push:
     branches:
       - prod-release/public
+  workflow_dispatch: 
 
 jobs:
-  push_to_public:
+  sync:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout internal repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          ref: prod-release/public
+      - name: Checkout private repo
+        uses: actions/checkout@v4
 
       - name: Setup Git
         run: |
-          git config user.name "bot"
-          git config user.email "bot@test.com"
+          git config --global user.name "sync-bot"
+          git config --global user.email "sync-bot@example.com"
 
-      - name: Add public repo remote
+      - name: Add public repo as remote
         run: |
           git remote add public https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-public.git
           git fetch public
 
-      - name: Remove .github directory
+      - name: Push changes to public repo develop branch
         run: |
-          rm -rf .github
-
-      - name: Push prod-release/public to public develop (excluding .github)
-        run: |
-          git checkout -B develop
-          git add .
-          git reset .github
-          git commit -m "Sync internal release (excluding .github)" || echo "No changes to commit"
-          git push -u public develop --force
-
-      - name: Sync prod-release/public into public develop
-        run: |
-          # Start from public/develop if it exists, otherwise create develop
-          if git show-ref --verify --quiet refs/remotes/public/develop; then
-            git checkout -B develop public/develop
-          else
-            git checkout -b develop
-          fi
-
-          # Merge internal prod-release/public into develop
-          git merge origin/prod-release/public --no-ff -m "Merge internal release into public develop"
-
-          # Remove internal-only files
-          rm -rf .github
-
-          # Stage and commit removals
-          git add --all
-          git commit -m "Remove internal CI configs (.github)" || echo "No changes to commit"
-
-          # Push changes back to public repo
-          git push public develop
-
-      - name: Create PR from develop to main
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
-          base: main
-
-          branch: develop
-          title: "Sync internal release into public main"
-          body: "Automated PR: Sync prod-release/public branch to public main branch"
-          update-branch: true
+          git push public HEAD:develop --force
