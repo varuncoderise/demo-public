@@ -36,11 +36,11 @@ jobs:
           git commit -m "Sync internal release (excluding .github)" || echo "No changes to commit"
           git push -u public develop --force
 
-      - name: Create PR from develop to main
+      - name: Create PR to prod-release/public
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.PAT_TOKEN }}
-          base: main
-          head: develop
-          title: "Sync internal release into public main"
-          body: "Automated PR: Sync prod-release/public branch to public main branch"
+          base: prod-release/public
+          branch: release/4x
+          title: "Sync release/4x into prod-release/public"
+          body: "Automated PR: Sync changes from internal repo main branch"
