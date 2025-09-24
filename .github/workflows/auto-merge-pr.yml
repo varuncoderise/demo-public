@@ -38,3 +38,4 @@ jobs:
           branch: release/4x
           title: "Sync release/4x into prod-release/public"
           body: "Automated PR: Sync changes from internal repo main branch"
+          update-branch: true
