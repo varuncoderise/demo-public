@@ -16,17 +16,24 @@ jobs:
 
       - name: Setup Git
         run: |
-          git config user.name "bot"
-          git config user.email "bot@test.com"
+          git config user.name "varuncoderise"
+          git config user.email "varun.kumar@coderisetechnologies.com"
 
       - name: Add public repo remote
         run: |
           git remote add public https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/varuncoderise/demo-public.git
           git fetch public
 
-      - name: Push prod-release/public to public develop
+      - name: Remove .github directory
+        run: |
+          rm -rf .github
+
+      - name: Push prod-release/public to public develop (excluding .github)
         run: |
           git checkout -B develop
+          git add .
+          git reset .github
+          git commit -m "Sync internal release (excluding .github)" || echo "No changes to commit"
           git push -u public develop --force
 
       - name: Create PR from develop to main
