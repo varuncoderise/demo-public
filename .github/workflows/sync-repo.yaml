@@ -7,7 +7,7 @@ permissions:
 on:
   push:
     branches:
-      - prod-release/public
+      - release/4x
   workflow_dispatch: 
 
 jobs:
@@ -17,6 +17,9 @@ jobs:
     steps:
       - name: Checkout private repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: release/4x
 
       - name: Setup Git
         run: |
@@ -26,8 +29,13 @@ jobs:
       - name: Add public repo as remote
         run: |
           git remote add public https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-public.git
-          git fetch public
+          git fetch demo-public
+
+      - name: Debug branches
+        run: |
+          git branch -a
+          git log --oneline -5
 
       - name: Push changes to public repo develop branch
         run: |
-          git push public HEAD:develop --force
+          git push demo-public HEAD:develop --force
