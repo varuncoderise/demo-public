@@ -5,10 +5,6 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   sync_release_branch:
     runs-on: ubuntu-latest
@@ -20,22 +16,21 @@ jobs:
 
       - name: Setup Git
         run: |
-          git config user.name "bot"
-          git config user.email "bot@test.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Merge main into release/4x
         run: |
-          git fetch origin
-          git checkout origin/release/4x -B release/4x
+          git fetch origin release/4x
+          git checkout release/4x
           git merge origin/main --no-ff -m "Sync main into release/4x [skip ci]"
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git release/4x
+          git push origin release/4x
 
       - name: Create PR to prod-release/public
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           base: prod-release/public
-          branch: release/4x
+          head: release/4x
           title: "Sync release/4x into prod-release/public"
           body: "Automated PR: Sync changes from internal repo main branch"
-          update-branch: true
