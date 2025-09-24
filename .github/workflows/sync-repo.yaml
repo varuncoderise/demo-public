@@ -21,25 +21,18 @@ jobs:
 
       - name: Add public repo remote
         run: |
-          git remote add public https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-public.git
+          git remote add public https://x-access-token:${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/varuncoderise/demo-public.git
           git fetch public
 
-      - name: Remove .github directory
-        run: |
-          rm -rf .github
-
-      - name: Push prod-release/public to public develop (excluding .github)
+      - name: Push prod-release/public to public develop
         run: |
           git checkout -B develop
-          git add .
-          git reset .github
-          git commit -m "Sync internal release (excluding .github)" || echo "No changes to commit"
           git push -u public develop --force
 
       - name: Create PR from develop to main
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.PUBLIC_REPO_TOKEN }}
           base: main
           head: develop
           title: "Sync internal release into public main"

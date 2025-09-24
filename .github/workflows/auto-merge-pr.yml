@@ -29,7 +29,7 @@ jobs:
       - name: Create PR to prod-release/public
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
           base: prod-release/public
           head: release/4x
           title: "Sync release/4x into prod-release/public"
