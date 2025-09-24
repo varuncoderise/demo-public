@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [closed]
     branches:
-      - prod-release/public
+      - main
 
 permissions:
   contents: read
