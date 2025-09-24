@@ -25,6 +25,18 @@ jobs:
           git remote add public https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-public.git
           git fetch public
 
+      - name: Remove .github directory
+        run: |
+          rm -rf .github
+
+      - name: Push prod-release/public to public develop (excluding .github)
+        run: |
+          git checkout -B develop
+          git add .
+          git reset .github
+          git commit -m "Sync internal release (excluding .github)" || echo "No changes to commit"
+          git push -u public develop --force
+
       - name: Sync prod-release/public into public develop
         run: |
           # Start from public/develop if it exists, otherwise create develop
@@ -52,6 +64,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
           base: main
+
           branch: develop
           title: "Sync internal release into public main"
           body: "Automated PR: Sync prod-release/public branch to public main branch"
