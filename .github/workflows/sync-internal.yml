@@ -9,45 +9,62 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout public repo (release/4x)
+      - name: Checkout public repo (develop)
         uses: actions/checkout@v4
         with:
-          ref: release/4x
+          ref: develop
           fetch-depth: 0
 
-      - name: Checkout private repo
+      - name: Add private repo remote and fetch
         run: |
-          git clone https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-private.git private-repo
-          cd private-repo
-          git checkout release/4x
+          git remote add private https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-private.git
+          git fetch private release/4x
 
-      - name: Sync files (ignore .github, changelog, hidden files)
+      - name: Cherry-pick commits from private repo
         run: |
-          rsync -av --delete \
-            --exclude '.git' \
-            --exclude '.github' \
-            --exclude 'CHANGELOG.md' \
-            --exclude '.*' \
-            private-repo/ ./
+          # Create a temp branch from private/release/4x
+          git checkout -b private-4x private/release/4x
 
-      - name: Commit changes
-        run: |
-          git config user.name "bot"
-          git config user.email "bot@test.com"
+          # Remove unwanted files
+          rm -rf .github
+          rm -f CHANGELOG.md
+          find . -maxdepth 1 -type f -name ".*" -exec rm -f {} \;
+
           git add .
-          git diff --quiet && echo "No changes to commit" && exit 0
-          git commit -m "Sync from private repo (${GITHUB_SHA})"
+          git commit -m "Clean private repo sync (ignore hidden/.github/changelog)" || echo "No clean-up commit needed"
 
-      - name: Push to sync branch
+          # Go back to develop
+          git checkout develop
+
+          # Rebase develop onto cleaned private branch
+          git rebase private-4x || (echo "Rebase failed, trying merge" && git merge private-4x --no-ff)
+
+      - name: Push develop branch
         run: |
-          git push origin HEAD:sync/private-4x --force
+          git push origin develop --force
 
-      - name: Create PR to release/4x
-        uses: peter-evans/create-pull-request@v6
+      - name: Create PR develop → main
+        uses: actions/github-script@v7
         with:
-          token: ${{ secrets.PAT_TOKEN }}
-          commit-message: "Sync from private repo"
-          branch: sync/private-4x
-          base: release/4x
-          title: "Sync from private repo"
-          body: "Automated PR with latest changes from private repo (release/4x)"
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            const { data: prs } = await github.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              head: "develop",
+              base: "main"
+            });
+            if (prs.length === 0) {
+              const { data: pr } = await github.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: "Sync develop → main",
+                head: "develop",
+                base: "main",
+                body: "Automated PR syncing latest code from private repo into main"
+              });
+              core.info(`Created PR #${pr.number}`);
+            } else {
+              core.info("PR from develop → main already exists");
+            }
