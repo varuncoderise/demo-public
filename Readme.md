@@ -3,6 +3,7 @@
 Welcome to the **Amazing Project**! This repository showcases cutting-edge technology and creative solutions.
 
 ## Features
+-Final test release coming from private
 - Coming from Private-1
 - ⚡ Lightning-fast performance
 - 🔒 Secure and reliable
