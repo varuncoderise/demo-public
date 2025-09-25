@@ -78,8 +78,8 @@ jobs:
             echo "No CHANGELOG.md found in public repo"
           fi
 
-      # Fetch latest release info and sync files
-      - name: Sync files and commit with release info
+      # Fetch latest release notes and sync files
+      - name: Sync files and commit with release notes
         run: |
           echo "Setting Git identity"
           git config --global user.name "GitHub Actions Bot"
@@ -90,13 +90,13 @@ jobs:
           rm -rf .github
           rm -f CHANGELOG.md
           find . -type f -name ".*" -exec rm -f {} \;
-          # Fetch latest release info
-          echo "Fetching latest release from varuncoderise/demo-internal"
-          RELEASE_INFO=$(gh release view --repo varuncoderise/demo-internal --json tagName,name,body -q '.name + "\n" + .body' || echo "No release found")
-          if [ -z "$RELEASE_INFO" ]; then
+          # Fetch latest release notes
+          echo "Fetching latest release notes from varuncoderise/demo-internal"
+          RELEASE_NOTES=$(gh release view --repo varuncoderise/demo-internal --json body -q '.body' || echo "No release found")
+          if [ -z "$RELEASE_NOTES" ]; then
             COMMIT_MESSAGE="Sync changes from private repo release/4x"
           else
-            COMMIT_MESSAGE="$RELEASE_INFO"
+            COMMIT_MESSAGE="$RELEASE_NOTES"
           fi
           echo "Commit message:"
           echo "$COMMIT_MESSAGE"
