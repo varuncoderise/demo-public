@@ -1,3 +1,11 @@
+# v1.1.0
+
+1.1.0 (2025-09-25)
+
+Feature Release
+
+- Release: v1.0.5 # v1.0.5 [82b2316](https://github.com/varuncoderise/demo-public/commit/82b2316)
+
 # v1.0.5
 
 1.0.5 (2025-09-25)
