@@ -28,7 +28,7 @@ jobs:
           echo "Checking network connectivity to GitHub:"
           ping -c 4 github.com || echo "Ping failed, continuing..."
 
-      #  Install GitHub CLI
+      # Install GitHub CLI
       - name: Install GitHub CLI
         run: |
           sudo apt update
@@ -43,6 +43,7 @@ jobs:
           echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
           gh auth status || { echo "GitHub CLI authentication failed"; exit 1; }
 
+      # Clone private repo with retry
       - name: Clone private repo
         run: |
           echo "Cloning private repo: varuncoderise/demo-internal"
@@ -61,25 +62,27 @@ jobs:
           cd private-repo
           git branch -a
 
+      # Compare and sync commits
       - name: Compare and sync commits
         run: |
-          echo "Comparing files between private and public repos"
+          echo "Setting Git identity"
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          echo "Preparing private repo"
           cd private-repo
-          # Remove unwanted files
+          # Remove unwanted files to avoid conflicts
           rm -rf .github
           rm -f CHANGELOG.md
           find . -maxdepth 1 -type f -name ".*" -exec rm -f {} \;
-          # Create temporary branch for private repo
+          # Create temporary branch
           git checkout -b temp-sync
           git add .
           git commit -m "Clean private repo files" || echo "No cleanup needed"
-          # Copy files to public repo for comparison
-          cp -r ./* ../
           cd ..
           # Add private repo as a remote
           git remote add private ./private-repo
           git fetch private temp-sync
-          # Compare and list differing files
+          # List changed files
           echo "Files changed between public/develop and private/release/4x:"
           git diff --name-only develop private/temp-sync
           # Get commits from private repo not in public/develop
@@ -88,7 +91,20 @@ jobs:
             echo "Cherry-picking commits:"
             for commit in $commits; do
               echo "Cherry-picking $commit"
-              git cherry-pick -x $commit || { echo "Cherry-pick failed for $commit"; git cherry-pick --abort; }
+              # Handle merge commits with -m 1
+              if git show --no-patch --format=%P $commit | grep -q " "; then
+                git cherry-pick -m 1 $commit || {
+                  echo "Merge conflict or error for $commit, aborting cherry-pick"
+                  git cherry-pick --abort
+                  echo "Skipping commit $commit"
+                }
+              else
+                git cherry-pick -x $commit || {
+                  echo "Merge conflict or error for $commit, aborting cherry-pick"
+                  git cherry-pick --abort
+                  echo "Skipping commit $commit"
+                }
+              fi
             done
           else
             echo "No new commits to sync"
@@ -96,15 +112,14 @@ jobs:
           # Remove temporary remote
           git remote remove private
 
+      # Push develop branch
       - name: Push develop
         run: |
           echo "Pushing to develop branch"
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
           git push origin develop
 
-
-      - name: Create PR develop to main
+      # Create PR develop → main
+      - name: Create PR develop → main
         run: |
           echo "Checking for existing PR"
           PR_EXISTS=$(gh pr list --head develop --base main --json number --jq '.[0].number' || echo "")
