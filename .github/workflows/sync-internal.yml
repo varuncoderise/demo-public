@@ -23,32 +23,35 @@ jobs:
           sudo apt install -y gh
 
       # 3️⃣ Authenticate GitHub CLI
-      - name: Authenticate gh
+      - name: Authenticate GitHub CLI
         run: echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
 
-      # 4️⃣ Add private repo remote and fetch release/4x
-      - name: Fetch private repo release/4x
+      # 4️⃣ Clone private repo
+      - name: Clone private repo
         run: |
-          git remote add private https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-internal.git
-          git fetch private release/4x
+          gh repo clone varuncoderise/demo-internal private-repo -- --branch release/4x
 
-      # 5️⃣ Sync only changed files preserving commit messages
-      - name: Cherry-pick changed commits
+      # 5️⃣ Remove unwanted files in private repo
+      - name: Clean private repo
         run: |
-          # Create a temporary branch from private repo
-          git checkout -b private-4x private/release/4x
-
-          # Remove unwanted files
+          cd private-repo
           rm -rf .github
           rm -f CHANGELOG.md
           find . -maxdepth 1 -type f -name ".*" -exec rm -f {} \;
 
-          git add .
-          git commit -m "Clean private repo sync (ignore hidden/.github/changelog)" || echo "No cleanup commit needed"
+      # 6️⃣ Cherry-pick private repo commits into public develop
+      - name: Cherry-pick commits
+        run: |
+          cd ..
+          # Add private repo as temporary remote
+          git remote add private ./private-repo
+          git fetch private release/4x
+          git checkout -b private-4x private/release/4x
 
-          # Compare with public develop branch
+          # Switch back to develop
           git checkout develop
-          # Get list of commits from private-4x not in develop
+
+          # Cherry-pick only commits not in develop
           commits=$(git log --reverse --pretty=format:"%H" develop..private-4x)
           if [ -n "$commits" ]; then
             for commit in $commits; do
@@ -58,11 +61,11 @@ jobs:
             echo "No new commits to sync"
           fi
 
-      # 6️⃣ Push develop branch
+      # 7️⃣ Push develop branch
       - name: Push develop
         run: git push origin develop
 
-      # 7️⃣ Create PR develop → main using gh CLI
+      # 8️⃣ Create PR develop → main using gh CLI
       - name: Create PR develop → main
         run: |
           PR_EXISTS=$(gh pr list --head develop --base main --json number --jq '.[0].number')
