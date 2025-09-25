@@ -9,27 +9,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       # Checkout public repo develop branch
-
       - name: Checkout public repo
         uses: actions/checkout@v4
         with:
           ref: develop
           fetch-depth: 0
 
-
-      #  Check Git environment
+      # Check Git environment
       - name: Check Git environment
         run: |
           echo "Git version:"
           git --version
           echo "Git configuration:"
           git config --list
+          echo "Checking DNS resolution for github.com:"
           nslookup github.com
+          echo "Checking network connectivity to GitHub:"
           ping -c 4 github.com || echo "Ping failed, continuing..."
 
-      # Install GitHub CLI
+      # nstall GitHub CLI
       - name: Install GitHub CLI
         run: |
           sudo apt update
@@ -37,14 +36,14 @@ jobs:
           echo "GitHub CLI version:"
           gh --version
 
+      # Authenticate GitHub CLI
       - name: Authenticate gh
         run: |
           echo "Authenticating GitHub CLI"
           echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
           gh auth status || { echo "GitHub CLI authentication failed"; exit 1; }
 
-
-      #  Clone private repo with retry
+      # Clone private repo with retry
       - name: Clone private repo
         run: |
           echo "Cloning private repo: varuncoderise/demo-internal"
@@ -73,11 +72,11 @@ jobs:
             echo "No workflows directory found in public repo"
           fi
 
-      # Compare and sync commits
+      # Compare and sync commits for changed files
       - name: Compare and sync commits
         run: |
           echo "Setting Git identity"
-          git config --global user.name "test-bot"
+          git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           echo "Preparing private repo"
           cd private-repo
@@ -95,30 +94,41 @@ jobs:
           git fetch private temp-sync
           # List changed files
           echo "Files changed between public/develop and private/release/4x:"
-          git diff --name-only develop private/temp-sync
-          # Get commits from private repo not in public/develop
-          commits=$(git log --reverse --pretty=format:"%H" develop..private/temp-sync)
+          changed_files=$(git diff --name-only develop private/temp-sync)
+          echo "$changed_files"
+          if [ -z "$changed_files" ]; then
+            echo "No file changes detected"
+            exit 0
+          fi
+          # Get commits affecting changed files
+          echo "Identifying commits for changed files"
+          commits=""
+          for file in $changed_files; do
+            file_commits=$(git log --pretty=format:"%H" private/temp-sync -- "$file")
+            commits="$commits $file_commits"
+          done
+          # Deduplicate commits
+          commits=$(echo "$commits" | tr ' ' '\n' | sort -u | tr '\n' ' ')
           if [ -n "$commits" ]; then
-            echo "Cherry-picking commits:"
+            echo "Cherry-picking commits for changed files:"
             for commit in $commits; do
               echo "Cherry-picking $commit"
-              # Handle merge commits with -m 1
               if git show --no-patch --format=%P $commit | grep -q " "; then
                 git cherry-pick -m 1 $commit || {
-                  echo "Merge conflict or error for $commit, aborting cherry-pick"
-                  git cherry-pick --abort
-                  echo "Skipping commit $commit"
+                  echo "Merge conflict or error for $commit, committing conflict state"
+                  git add .
+                  git commit -m "Cherry-pick $commit with conflicts from private repo"
                 }
               else
                 git cherry-pick -x $commit || {
-                  echo "Merge conflict or error for $commit, aborting cherry-pick"
-                  git cherry-pick --abort
-                  echo "Skipping commit $commit"
+                  echo "Merge conflict or error for $commit, committing conflict state"
+                  git add .
+                  git commit -m "Cherry-pick $commit with conflicts from private repo"
                 }
               fi
             done
           else
-            echo "No new commits to sync"
+            echo "No relevant commits found for changed files"
           fi
           # Remove temporary remote
           git remote remove private
@@ -141,7 +151,7 @@ jobs:
           echo "Pushing to develop branch"
           git push origin develop
 
-      #  Create PR develop → main
+      # Create PR develop to main
       - name: Create PR develop → main
         run: |
           echo "Checking for existing PR"
@@ -152,7 +162,7 @@ jobs:
               --head develop \
               --base main \
               --title "Sync develop → main" \
-              --body "Automated PR syncing latest code from private repo release/4x" || { echo "Failed to create PR"; exit 1; }
+              --body "Automated PR syncing changed files from private repo release/4x" || { echo "Failed to create PR"; exit 1; }
           else
             echo "PR from develop to main already exists: $PR_EXISTS"
           fi
