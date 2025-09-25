@@ -1,0 +1,53 @@
+name: Sync from Private Repo
+
+on:
+  repository_dispatch:
+    types: [sync-request]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout public repo (release/4x)
+        uses: actions/checkout@v4
+        with:
+          ref: release/4x
+          fetch-depth: 0
+
+      - name: Checkout private repo
+        run: |
+          git clone https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-private.git private-repo
+          cd private-repo
+          git checkout release/4x
+
+      - name: Sync files (ignore .github, changelog, hidden files)
+        run: |
+          rsync -av --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'CHANGELOG.md' \
+            --exclude '.*' \
+            private-repo/ ./
+
+      - name: Commit changes
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@test.com"
+          git add .
+          git diff --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Sync from private repo (${GITHUB_SHA})"
+
+      - name: Push to sync branch
+        run: |
+          git push origin HEAD:sync/private-4x --force
+
+      - name: Create PR to release/4x
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          commit-message: "Sync from private repo"
+          branch: sync/private-4x
+          base: release/4x
+          title: "Sync from private repo"
+          body: "Automated PR with latest changes from private repo (release/4x)"
