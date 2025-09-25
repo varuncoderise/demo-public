@@ -9,20 +9,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout public repo (develop)
+      # 1️⃣ Checkout public repo develop branch
+      - name: Checkout public repo
         uses: actions/checkout@v4
         with:
           ref: develop
           fetch-depth: 0
 
-      - name: Add private repo remote and fetch
+      # 2️⃣ Install GitHub CLI
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+
+      # 3️⃣ Authenticate GitHub CLI
+      - name: Authenticate gh
+        run: echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
+
+      # 4️⃣ Add private repo remote and fetch release/4x
+      - name: Fetch private repo release/4x
         run: |
           git remote add private https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-internal.git
           git fetch private release/4x
 
-      - name: Cherry-pick commits from private repo
+      # 5️⃣ Sync only changed files preserving commit messages
+      - name: Cherry-pick changed commits
         run: |
-          # Create a temp branch from private/release/4x
+          # Create a temporary branch from private repo
           git checkout -b private-4x private/release/4x
 
           # Remove unwanted files
@@ -31,40 +44,33 @@ jobs:
           find . -maxdepth 1 -type f -name ".*" -exec rm -f {} \;
 
           git add .
-          git commit -m "Clean private repo sync (ignore hidden/.github/changelog)" || echo "No clean-up commit needed"
+          git commit -m "Clean private repo sync (ignore hidden/.github/changelog)" || echo "No cleanup commit needed"
 
-          # Go back to develop
+          # Compare with public develop branch
           git checkout develop
+          # Get list of commits from private-4x not in develop
+          commits=$(git log --reverse --pretty=format:"%H" develop..private-4x)
+          if [ -n "$commits" ]; then
+            for commit in $commits; do
+              git cherry-pick -x $commit || git cherry-pick --abort
+            done
+          else
+            echo "No new commits to sync"
+          fi
 
-          # Rebase develop onto cleaned private branch
-          git rebase private-4x || (echo "Rebase failed, trying merge" && git merge private-4x --no-ff)
+      # 6️⃣ Push develop branch
+      - name: Push develop
+        run: git push origin develop
 
-      - name: Push develop branch
-        run: |
-          git push origin develop --force
-
+      # 7️⃣ Create PR develop → main using gh CLI
       - name: Create PR develop → main
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.PAT_TOKEN }}
-          script: |
-            const { data: prs } = await github.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: "open",
-              head: "develop",
-              base: "main"
-            });
-            if (prs.length === 0) {
-              const { data: pr } = await github.pulls.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: "Sync develop → main",
-                head: "develop",
-                base: "main",
-                body: "Automated PR syncing latest code from private repo into main"
-              });
-              core.info(`Created PR #${pr.number}`);
-            } else {
-              core.info("PR from develop → main already exists");
-            }
+        run: |
+          PR_EXISTS=$(gh pr list --head develop --base main --json number --jq '.[0].number')
+          if [ -z "$PR_EXISTS" ]; then
+            gh pr create \
+              --head develop \
+              --base main \
+              --title "Sync develop → main" \
+              --body "Automated PR syncing latest code from private repo into main"
+          else
+            echo "PR from develop → main already exists: $PR_EXISTS"
