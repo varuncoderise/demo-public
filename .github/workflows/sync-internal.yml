@@ -17,7 +17,7 @@ jobs:
 
       - name: Add private repo remote and fetch
         run: |
-          git remote add private https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-private.git
+          git remote add private https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-internal.git
           git fetch private release/4x
 
       - name: Cherry-pick commits from private repo
