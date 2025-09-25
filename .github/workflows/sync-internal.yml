@@ -28,7 +28,7 @@ jobs:
           echo "Checking network connectivity to GitHub:"
           ping -c 4 github.com || echo "Ping failed, continuing..."
 
-      # nstall GitHub CLI
+      # Install GitHub CLI
       - name: Install GitHub CLI
         run: |
           sudo apt update
@@ -62,88 +62,69 @@ jobs:
           cd private-repo
           git branch -a
 
-      # Preserve public repo workflows
-      - name: Backup public repo workflows
+      # Preserve public repo files
+      - name: Backup public repo files
         run: |
-          if [ -d ".github/workflows" ]; then
-            echo "Backing up public repo workflows"
-            cp -r .github/workflows workflows-backup
+          if [ -d ".github" ]; then
+            echo "Backing up public repo .github"
+            cp -r .github github-backup
           else
-            echo "No workflows directory found in public repo"
+            echo "No .github directory found in public repo"
+          fi
+          if [ -f "CHANGELOG.md" ]; then
+            echo "Backing up public repo CHANGELOG.md"
+            cp CHANGELOG.md changelog-backup.md
+          else
+            echo "No CHANGELOG.md found in public repo"
           fi
 
-      # Compare and sync commits for changed files
-      - name: Compare and sync commits
+      # Fetch latest release info and sync files
+      - name: Sync files and commit with release info
         run: |
           echo "Setting Git identity"
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           echo "Preparing private repo"
           cd private-repo
-          # Remove unwanted files to avoid conflicts
+          # Remove unwanted files from private repo
           rm -rf .github
           rm -f CHANGELOG.md
-          find . -maxdepth 1 -type f -name ".*" -exec rm -f {} \;
-          # Create temporary branch
-          git checkout -b temp-sync
-          git add .
-          git commit -m "Clean private repo files" || echo "No cleanup needed"
-          cd ..
-          # Add private repo as a remote
-          git remote add private ./private-repo
-          git fetch private temp-sync
-          # List changed files
-          echo "Files changed between public/develop and private/release/4x:"
-          changed_files=$(git diff --name-only develop private/temp-sync)
-          echo "$changed_files"
-          if [ -z "$changed_files" ]; then
-            echo "No file changes detected"
-            exit 0
-          fi
-          # Get commits affecting changed files
-          echo "Identifying commits for changed files"
-          commits=""
-          for file in $changed_files; do
-            file_commits=$(git log --pretty=format:"%H" private/temp-sync -- "$file")
-            commits="$commits $file_commits"
-          done
-          # Deduplicate commits
-          commits=$(echo "$commits" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-          if [ -n "$commits" ]; then
-            echo "Cherry-picking commits for changed files:"
-            for commit in $commits; do
-              echo "Cherry-picking $commit"
-              if git show --no-patch --format=%P $commit | grep -q " "; then
-                git cherry-pick -m 1 $commit || {
-                  echo "Merge conflict or error for $commit, committing conflict state"
-                  git add .
-                  git commit -m "Cherry-pick $commit with conflicts from private repo"
-                }
-              else
-                git cherry-pick -x $commit || {
-                  echo "Merge conflict or error for $commit, committing conflict state"
-                  git add .
-                  git commit -m "Cherry-pick $commit with conflicts from private repo"
-                }
-              fi
-            done
+          find . -type f -name ".*" -exec rm -f {} \;
+          # Fetch latest release info
+          echo "Fetching latest release from varuncoderise/demo-internal"
+          RELEASE_INFO=$(gh release view --repo varuncoderise/demo-internal --json tagName,name,body -q '.name + "\n" + .body' || echo "No release found")
+          if [ -z "$RELEASE_INFO" ]; then
+            COMMIT_MESSAGE="Sync changes from private repo release/4x"
           else
-            echo "No relevant commits found for changed files"
+            COMMIT_MESSAGE="$RELEASE_INFO"
           fi
-          # Remove temporary remote
-          git remote remove private
-          # Restore public repo workflows
-          if [ -d "workflows-backup" ]; then
-            echo "Restoring public repo workflows"
-            rm -rf .github/workflows
-            mv workflows-backup .github/workflows
-            git add .github/workflows
-            git commit -m "Restore public repo workflows" || echo "No workflows to restore"
+          echo "Commit message:"
+          echo "$COMMIT_MESSAGE"
+          cd ..
+          # Remove existing files in public repo (except backups)
+          find . -maxdepth 1 -type f -not -name "changelog-backup.md" -not -name "*.yml" -not -name "*.yaml" -exec rm -f {} \;
+          find . -maxdepth 1 -type d -not -name "private-repo" -not -name "github-backup" -not -name ".git" -exec rm -rf {} \;
+          # Copy files from private repo
+          cp -r private-repo/* .
+          # Restore public repo files
+          if [ -d "github-backup" ]; then
+            echo "Restoring public repo .github"
+            rm -rf .github
+            mv github-backup .github
+          fi
+          if [ -f "changelog-backup.md" ]; then
+            echo "Restoring public repo CHANGELOG.md"
+            mv changelog-backup.md CHANGELOG.md
           fi
           # Remove private-repo directory
           rm -rf private-repo
-          git rm -r --cached private-repo || echo "private-repo not in git index"
-          git commit -m "Remove private-repo directory" || echo "No private-repo to remove"
+          # Stage and commit changes
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "$COMMIT_MESSAGE"
+          fi
 
       # Push develop branch
       - name: Push develop
