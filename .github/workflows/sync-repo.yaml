@@ -1,41 +1,21 @@
-name: Sync to Public Repo
-
-permissions:
-  contents: write
-  pull-requests: write
+name: Trigger Public Repo Sync
 
 on:
-  push:
-    branches:
-      - release/4x
-  workflow_dispatch: 
+  workflow_dispatch:  # run manually
 
 jobs:
-  sync:
+  trigger:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout private repo
-        uses: actions/checkout@v4
+      - name: Trigger public repo workflow
+        uses: peter-evans/repository-dispatch@v3
         with:
-          fetch-depth: 0
-          ref: release/4x
-
-      - name: Setup Git
-        run: |
-          git config --global user.name "sync-bot"
-          git config --global user.email "sync-bot@example.com"
-
-      - name: Add public repo as remote
-        run: |
-          git remote add public https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-public.git
-          git fetch public
-
-      - name: Debug branches
-        run: |
-          git branch -a
-          git log --oneline -5
-
-      - name: Push changes to public repo develop branch
-        run: |
-          git push public HEAD:develop --force
+          token: ${{ secrets.PAT_TOKEN }} # PAT must have access to public repo
+          repository: varuncoderise/demo-public
+          event-type: sync-request
+          client-payload: |
+            {
+              "source_repo": "${{ github.repository }}",
+              "source_ref": "release/4x"
+            }
