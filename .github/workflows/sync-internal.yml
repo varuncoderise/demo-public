@@ -9,14 +9,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       # Checkout public repo develop branch
+
       - name: Checkout public repo
         uses: actions/checkout@v4
         with:
           ref: develop
           fetch-depth: 0
 
-      # Check Git environment
+
+      #  Check Git environment
       - name: Check Git environment
         run: |
           echo "Git version:"
@@ -34,14 +37,14 @@ jobs:
           echo "GitHub CLI version:"
           gh --version
 
-      # Authenticate GitHub CLI
       - name: Authenticate gh
         run: |
           echo "Authenticating GitHub CLI"
           echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
           gh auth status || { echo "GitHub CLI authentication failed"; exit 1; }
 
-      # Clone private repo with retry
+
+      #  Clone private repo with retry
       - name: Clone private repo
         run: |
           echo "Cloning private repo: varuncoderise/demo-internal"
@@ -138,7 +141,7 @@ jobs:
           echo "Pushing to develop branch"
           git push origin develop
 
-      # Create PR develop to main
+      #  Create PR develop → main
       - name: Create PR develop → main
         run: |
           echo "Checking for existing PR"
