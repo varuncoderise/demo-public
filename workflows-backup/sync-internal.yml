@@ -1,0 +1,168 @@
+name: Sync from Private Repo
+
+on:
+  repository_dispatch:
+    types: [sync-request]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout public repo develop branch
+      - name: Checkout public repo
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      # Check Git environment
+      - name: Check Git environment
+        run: |
+          echo "Git version:"
+          git --version
+          echo "Git configuration:"
+          git config --list
+          echo "Checking DNS resolution for github.com:"
+          nslookup github.com
+          echo "Checking network connectivity to GitHub:"
+          ping -c 4 github.com || echo "Ping failed, continuing..."
+
+      # nstall GitHub CLI
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+          echo "GitHub CLI version:"
+          gh --version
+
+      # Authenticate GitHub CLI
+      - name: Authenticate gh
+        run: |
+          echo "Authenticating GitHub CLI"
+          echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
+          gh auth status || { echo "GitHub CLI authentication failed"; exit 1; }
+
+      # Clone private repo with retry
+      - name: Clone private repo
+        run: |
+          echo "Cloning private repo: varuncoderise/demo-internal"
+          for i in {1..3}; do
+            git clone --branch release/4x https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-internal.git private-repo && break
+            echo "Clone attempt $i failed, retrying in 5 seconds..."
+            sleep 5
+          done
+          if [ ! -d "private-repo" ]; then
+            echo "Failed to clone private repo after 3 attempts"
+            echo "Listing available branches for debugging:"
+            git ls-remote https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/varuncoderise/demo-internal.git
+            exit 1
+          fi
+          echo "Listing branches in private repo:"
+          cd private-repo
+          git branch -a
+
+      # Preserve public repo workflows
+      - name: Backup public repo workflows
+        run: |
+          if [ -d ".github/workflows" ]; then
+            echo "Backing up public repo workflows"
+            cp -r .github/workflows workflows-backup
+          else
+            echo "No workflows directory found in public repo"
+          fi
+
+      # Compare and sync commits for changed files
+      - name: Compare and sync commits
+        run: |
+          echo "Setting Git identity"
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          echo "Preparing private repo"
+          cd private-repo
+          # Remove unwanted files to avoid conflicts
+          rm -rf .github
+          rm -f CHANGELOG.md
+          find . -maxdepth 1 -type f -name ".*" -exec rm -f {} \;
+          # Create temporary branch
+          git checkout -b temp-sync
+          git add .
+          git commit -m "Clean private repo files" || echo "No cleanup needed"
+          cd ..
+          # Add private repo as a remote
+          git remote add private ./private-repo
+          git fetch private temp-sync
+          # List changed files
+          echo "Files changed between public/develop and private/release/4x:"
+          changed_files=$(git diff --name-only develop private/temp-sync)
+          echo "$changed_files"
+          if [ -z "$changed_files" ]; then
+            echo "No file changes detected"
+            exit 0
+          fi
+          # Get commits affecting changed files
+          echo "Identifying commits for changed files"
+          commits=""
+          for file in $changed_files; do
+            file_commits=$(git log --pretty=format:"%H" private/temp-sync -- "$file")
+            commits="$commits $file_commits"
+          done
+          # Deduplicate commits
+          commits=$(echo "$commits" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+          if [ -n "$commits" ]; then
+            echo "Cherry-picking commits for changed files:"
+            for commit in $commits; do
+              echo "Cherry-picking $commit"
+              if git show --no-patch --format=%P $commit | grep -q " "; then
+                git cherry-pick -m 1 $commit || {
+                  echo "Merge conflict or error for $commit, committing conflict state"
+                  git add .
+                  git commit -m "Cherry-pick $commit with conflicts from private repo"
+                }
+              else
+                git cherry-pick -x $commit || {
+                  echo "Merge conflict or error for $commit, committing conflict state"
+                  git add .
+                  git commit -m "Cherry-pick $commit with conflicts from private repo"
+                }
+              fi
+            done
+          else
+            echo "No relevant commits found for changed files"
+          fi
+          # Remove temporary remote
+          git remote remove private
+          # Restore public repo workflows
+          if [ -d "workflows-backup" ]; then
+            echo "Restoring public repo workflows"
+            rm -rf .github/workflows
+            mv workflows-backup .github/workflows
+            git add .github/workflows
+            git commit -m "Restore public repo workflows" || echo "No workflows to restore"
+          fi
+          # Remove private-repo directory
+          rm -rf private-repo
+          git rm -r --cached private-repo || echo "private-repo not in git index"
+          git commit -m "Remove private-repo directory" || echo "No private-repo to remove"
+
+      # Push develop branch
+      - name: Push develop
+        run: |
+          echo "Pushing to develop branch"
+          git push origin develop
+
+      # Create PR develop to main
+      - name: Create PR develop → main
+        run: |
+          echo "Checking for existing PR"
+          PR_EXISTS=$(gh pr list --head develop --base main --json number --jq '.[0].number' || echo "")
+          if [ -z "$PR_EXISTS" ]; then
+            echo "Creating new PR from develop to main"
+            gh pr create \
+              --head develop \
+              --base main \
+              --title "Sync develop → main" \
+              --body "Automated PR syncing changed files from private repo release/4x" || { echo "Failed to create PR"; exit 1; }
+          else
+            echo "PR from develop to main already exists: $PR_EXISTS"
+          fi
