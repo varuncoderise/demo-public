@@ -9,12 +9,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      #  Checkout public repo develop branch
+
+      # Checkout public repo develop branch
+
       - name: Checkout public repo
         uses: actions/checkout@v4
         with:
           ref: develop
           fetch-depth: 0
+
 
       #  Check Git environment
       - name: Check Git environment
@@ -23,9 +26,7 @@ jobs:
           git --version
           echo "Git configuration:"
           git config --list
-          echo "Checking DNS resolution for github.com:"
           nslookup github.com
-          echo "Checking network connectivity to GitHub:"
           ping -c 4 github.com || echo "Ping failed, continuing..."
 
       # Install GitHub CLI
@@ -36,12 +37,12 @@ jobs:
           echo "GitHub CLI version:"
           gh --version
 
-      #  Authenticate GitHub CLI
       - name: Authenticate gh
         run: |
           echo "Authenticating GitHub CLI"
           echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
           gh auth status || { echo "GitHub CLI authentication failed"; exit 1; }
+
 
       #  Clone private repo with retry
       - name: Clone private repo
@@ -62,11 +63,21 @@ jobs:
           cd private-repo
           git branch -a
 
-      #  Compare and sync commits
+      # Preserve public repo workflows
+      - name: Backup public repo workflows
+        run: |
+          if [ -d ".github/workflows" ]; then
+            echo "Backing up public repo workflows"
+            cp -r .github/workflows workflows-backup
+          else
+            echo "No workflows directory found in public repo"
+          fi
+
+      # Compare and sync commits
       - name: Compare and sync commits
         run: |
           echo "Setting Git identity"
-          git config --global user.name "GitHub Actions Bot"
+          git config --global user.name "test-bot"
           git config --global user.email "actions@github.com"
           echo "Preparing private repo"
           cd private-repo
@@ -111,8 +122,20 @@ jobs:
           fi
           # Remove temporary remote
           git remote remove private
+          # Restore public repo workflows
+          if [ -d "workflows-backup" ]; then
+            echo "Restoring public repo workflows"
+            rm -rf .github/workflows
+            mv workflows-backup .github/workflows
+            git add .github/workflows
+            git commit -m "Restore public repo workflows" || echo "No workflows to restore"
+          fi
+          # Remove private-repo directory
+          rm -rf private-repo
+          git rm -r --cached private-repo || echo "private-repo not in git index"
+          git commit -m "Remove private-repo directory" || echo "No private-repo to remove"
 
-      #  Push develop branch
+      # Push develop branch
       - name: Push develop
         run: |
           echo "Pushing to develop branch"
