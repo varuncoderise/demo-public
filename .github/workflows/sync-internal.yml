@@ -9,14 +9,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout public repo develop branch
+      #  Checkout public repo develop branch
       - name: Checkout public repo
         uses: actions/checkout@v4
         with:
           ref: develop
           fetch-depth: 0
 
-      # Check Git environment
+      #  Check Git environment
       - name: Check Git environment
         run: |
           echo "Git version:"
@@ -36,14 +36,14 @@ jobs:
           echo "GitHub CLI version:"
           gh --version
 
-      # Authenticate GitHub CLI
+      #  Authenticate GitHub CLI
       - name: Authenticate gh
         run: |
           echo "Authenticating GitHub CLI"
           echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
           gh auth status || { echo "GitHub CLI authentication failed"; exit 1; }
 
-      # Clone private repo with retry
+      #  Clone private repo with retry
       - name: Clone private repo
         run: |
           echo "Cloning private repo: varuncoderise/demo-internal"
@@ -62,7 +62,7 @@ jobs:
           cd private-repo
           git branch -a
 
-      # Compare and sync commits
+      #  Compare and sync commits
       - name: Compare and sync commits
         run: |
           echo "Setting Git identity"
@@ -112,13 +112,13 @@ jobs:
           # Remove temporary remote
           git remote remove private
 
-      # Push develop branch
+      #  Push develop branch
       - name: Push develop
         run: |
           echo "Pushing to develop branch"
           git push origin develop
 
-      # Create PR develop → main
+      #  Create PR develop → main
       - name: Create PR develop → main
         run: |
           echo "Checking for existing PR"
@@ -132,3 +132,4 @@ jobs:
               --body "Automated PR syncing latest code from private repo release/4x" || { echo "Failed to create PR"; exit 1; }
           else
             echo "PR from develop to main already exists: $PR_EXISTS"
+          fi
