@@ -1,3 +1,29 @@
+# v1.1.0
+
+1.1.0 (2025-09-25)
+
+Feature Release
+
+- Release: v1.0.5 # v1.0.5 [82b2316](https://github.com/varuncoderise/demo-public/commit/82b2316)
+
+# v1.0.5
+
+1.0.5 (2025-09-25)
+
+Hotfix Release
+
+- Release: v1.0.5 # v1.0.5 [0275744](https://github.com/varuncoderise/demo-public/commit/0275744)
+- Test - Test - Added automation [6b62546](https://github.com/varuncoderise/demo-public/commit/6b62546)
+
+# v1.0.4
+
+1.0.4 (2025-09-25)
+
+Hotfix Release
+
+- update [f251676](https://github.com/varuncoderise/demo-public/commit/f251676)
+- update [8992d9a](https://github.com/varuncoderise/demo-public/commit/8992d9a)
+
 # v1.0.3
 
 1.0.3 (2025-09-25)
