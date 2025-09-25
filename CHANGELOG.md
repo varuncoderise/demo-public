@@ -1,3 +1,12 @@
+# v1.0.4
+
+1.0.4 (2025-09-25)
+
+Hotfix Release
+
+- update [f251676](https://github.com/varuncoderise/demo-public/commit/f251676)
+- update [8992d9a](https://github.com/varuncoderise/demo-public/commit/8992d9a)
+
 # v1.0.3
 
 1.0.3 (2025-09-25)
