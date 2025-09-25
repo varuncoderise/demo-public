@@ -9,14 +9,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout public repo develop branch
+      # Checkout public repo develop branch
       - name: Checkout public repo
         uses: actions/checkout@v4
         with:
           ref: develop
           fetch-depth: 0
 
-      # 2️⃣ Check Git environment
+      # Check Git environment
       - name: Check Git environment
         run: |
           echo "Git version:"
@@ -28,7 +28,7 @@ jobs:
           echo "Checking network connectivity to GitHub:"
           ping -c 4 github.com || echo "Ping failed, continuing..."
 
-      # 3️⃣ Install GitHub CLI
+      #  Install GitHub CLI
       - name: Install GitHub CLI
         run: |
           sudo apt update
@@ -36,14 +36,13 @@ jobs:
           echo "GitHub CLI version:"
           gh --version
 
-      # 4️⃣ Authenticate GitHub CLI
+      # Authenticate GitHub CLI
       - name: Authenticate gh
         run: |
           echo "Authenticating GitHub CLI"
           echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
           gh auth status || { echo "GitHub CLI authentication failed"; exit 1; }
 
-      # 5️⃣ Clone private repo with retry
       - name: Clone private repo
         run: |
           echo "Cloning private repo: varuncoderise/demo-internal"
@@ -62,42 +61,59 @@ jobs:
           cd private-repo
           git branch -a
 
-      # 6️⃣ Sync files from private repo to public repo
-      - name: Sync files
+      - name: Compare and sync commits
         run: |
-          echo "Copying files from private repo to public repo"
+          echo "Comparing files between private and public repos"
           cd private-repo
+          # Remove unwanted files
           rm -rf .github
           rm -f CHANGELOG.md
           find . -maxdepth 1 -type f -name ".*" -exec rm -f {} \;
+          # Create temporary branch for private repo
+          git checkout -b temp-sync
+          git add .
+          git commit -m "Clean private repo files" || echo "No cleanup needed"
+          # Copy files to public repo for comparison
           cp -r ./* ../
           cd ..
-          git add .
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
+          # Add private repo as a remote
+          git remote add private ./private-repo
+          git fetch private temp-sync
+          # Compare and list differing files
+          echo "Files changed between public/develop and private/release/4x:"
+          git diff --name-only develop private/temp-sync
+          # Get commits from private repo not in public/develop
+          commits=$(git log --reverse --pretty=format:"%H" develop..private/temp-sync)
+          if [ -n "$commits" ]; then
+            echo "Cherry-picking commits:"
+            for commit in $commits; do
+              echo "Cherry-picking $commit"
+              git cherry-pick -x $commit || { echo "Cherry-pick failed for $commit"; git cherry-pick --abort; }
+            done
           else
-            git commit -m "Sync changes from private repo release/4x"
+            echo "No new commits to sync"
           fi
+          # Remove temporary remote
+          git remote remove private
 
-      # 7️⃣ Push develop branch
       - name: Push develop
         run: |
           echo "Pushing to develop branch"
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
           git push origin develop
 
-      # 8️⃣ Create PR develop → main
-      - name: Create PR develop → main
+
+      - name: Create PR develop to main
         run: |
           echo "Checking for existing PR"
-          PR_EXISTS=$(gh pr list --head develop --base main --json number --jq '.[0].number')
+          PR_EXISTS=$(gh pr list --head develop --base main --json number --jq '.[0].number' || echo "")
           if [ -z "$PR_EXISTS" ]; then
             echo "Creating new PR from develop to main"
             gh pr create \
               --head develop \
               --base main \
               --title "Sync develop → main" \
-              --body "Automated PR syncing latest code from private repo release/4x"
+              --body "Automated PR syncing latest code from private repo release/4x" || { echo "Failed to create PR"; exit 1; }
           else
-            echo "PR from develop → main already exists: $PR_EXISTS"
+            echo "PR from develop to main already exists: $PR_EXISTS"
