@@ -156,7 +156,11 @@ jobs:
 
           # Collect commit message as a single entry
           COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
-          FORMATTED_MSG=$(echo "$COMMIT_MSG" | sed 's/^/- /' || echo "$COMMIT_MSG")
+          if [[ "$COMMIT_MSG" =~ $'\n' ]]; then
+            FORMATTED_MSG=$(echo "$COMMIT_MSG" | sed 's/^/- /' || echo "$COMMIT_MSG")
+          else
+            FORMATTED_MSG="- $COMMIT_MSG"
+          fi
           echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
           echo "FORMATTED_MSG=$FORMATTED_MSG" >> $GITHUB_ENV
 
