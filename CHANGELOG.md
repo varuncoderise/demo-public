@@ -1,3 +1,13 @@
+# v1.1.7
+
+1.1.7 (2025-09-26)
+
+Maintenance Release
+
+- - Added pipelines
+- - Fixed bugs
+- - Added chatbot
+
 # v1.1.6
 
 1.1.6 (2025-09-26)
