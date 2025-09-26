@@ -158,12 +158,9 @@ jobs:
           COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
           if [[ "$COMMIT_MSG" =~ $'\n' ]]; then
             # Multi-line commit message
-            FORMATTED_MSG=$(echo "$COMMIT_MSG" | sed 's/^/- /' | sed ':a;N;$!ba;s/\n/\\n/g')
-            echo "FORMATTED_MSG=$FORMATTED_MSG" >> $GITHUB_ENV
-            echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
-            echo "$FORMATTED_MSG" | sed 's/\\n/\n/g' >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
-            echo "BREAKING_COMMITS=" >> $GITHUB_ENV
+            FORMATTED_MD=$(echo "$COMMIT_MSG" | awk '{print "- " $0}' | tr '\n' '~')
+            echo "FORMATTED_MD=$FORMATTED_MD" >> $GITHUB_ENV
+            OTHER_MD=$(echo "$FORMATTED_MD" | tr '~' '\n')
           else
             # Single-line commit message, process all commits
             COMMITS=$(git log $COMMIT_RANGE --no-merges --pretty="%h %s" -n 20 || echo "")
@@ -182,13 +179,13 @@ jobs:
             done <<< "$COMMITS"
             BREAKING_MD=$(echo -e "$BREAKING_MD" | sed '/^$/d')
             OTHER_MD=$(echo -e "$OTHER_MD" | sed '/^$/d')
-            echo "BREAKING_COMMITS<<EOF" >> $GITHUB_ENV
-            echo "$BREAKING_MD" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
-            echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
-            echo "$OTHER_MD" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
           fi
+          echo "BREAKING_COMMITS<<EOF" >> $GITHUB_ENV
+          echo "$BREAKING_MD" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
+          echo "$OTHER_MD" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       # Generate changelog
       - name: Generate Changelog
