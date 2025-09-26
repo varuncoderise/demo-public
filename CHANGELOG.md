@@ -1,3 +1,11 @@
+# v1.1.6
+
+1.1.6 (2025-09-26)
+
+Maintenance Release
+
+- fixed release [f0bb802](https://github.com/varuncoderise/demo-public/commit/f0bb802)
+
 # v1.1.5
 
 1.1.5 (2025-09-26)
