@@ -1,3 +1,12 @@
+# v1.1.9
+
+1.1.9 (2025-09-26)
+
+Maintenance Release
+
+- added private sync pipeline [a3caa37](https://github.com/varuncoderise/demo-public/commit/a3caa37)
+- added private sync pipeline [1468b02](https://github.com/varuncoderise/demo-public/commit/1468b02)
+
 # v1.1.8
 
 1.1.8 (2025-09-26)
