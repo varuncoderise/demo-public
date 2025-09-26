@@ -1,3 +1,11 @@
+# v1.1.2
+
+1.1.2 (2025-09-26)
+
+Maintenance Release
+
+- - Added file - fixed bugs [b60b9d0](https://github.com/varuncoderise/demo-public/commit/b60b9d0)
+
 # v1.1.1
 
 1.1.1 (2025-09-25)
