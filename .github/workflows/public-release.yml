@@ -158,10 +158,10 @@ jobs:
           COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
           if [[ "$COMMIT_MSG" =~ $'\n' ]]; then
             # Multi-line commit message
-            FORMATTED_MSG=$(echo "$COMMIT_MSG" | sed 's/^/- /' || echo "$COMMIT_MSG")
+            FORMATTED_MSG=$(echo "$COMMIT_MSG" | sed 's/^/- /' | sed ':a;N;$!ba;s/\n/\\n/g')
             echo "FORMATTED_MSG=$FORMATTED_MSG" >> $GITHUB_ENV
             echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
-            echo "$FORMATTED_MSG" >> $GITHUB_ENV
+            echo "$FORMATTED_MSG" | sed 's/\\n/\n/g' >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
             echo "BREAKING_COMMITS=" >> $GITHUB_ENV
           else
