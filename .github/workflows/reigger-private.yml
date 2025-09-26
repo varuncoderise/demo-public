@@ -1,9 +1,7 @@
 name: Trigger Public Repo Sync
 
 on:
-  workflow_dispatch: 
-  release:
-    types: [published] 
+  workflow_dispatch:  
 
 jobs:
   trigger:
