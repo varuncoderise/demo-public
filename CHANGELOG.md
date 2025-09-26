@@ -1,3 +1,12 @@
+# v1.1.11
+
+1.1.11 (2025-09-26)
+
+Maintenance Release
+
+-  test fix
+-  test pipeline
+
 # v1.1.10
 
 1.1.10 (2025-09-26)
