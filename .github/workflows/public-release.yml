@@ -30,7 +30,7 @@ jobs:
           ref: main
           token: ${{ secrets.PAT_TOKEN }}
 
-      # Calculate 3-Digit Version
+      # Calculate 3-digit version
       - name: Calculate 3-Digit Version
         id: version
         env:
@@ -82,7 +82,7 @@ jobs:
 
           # Get PR labels
           PR_NUMBER=${{ github.event.pull_request.number }}
-          LABELS=$(GH_TOKEN=${{ secrets.PAT_TOKEN }} gh pr view $PR_NUMBER --json labels --jq '.labels[].name' || echo "")
+          LABELS=$(GH_TOKEN=${{ secrets.PAT_TOKEN }} gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
           echo "PR labels: $LABELS"
 
           # Determine release type and version
@@ -106,12 +106,12 @@ jobs:
             BREAKING_CHANGES="false"
           elif echo "$LABELS" | grep -q "^release:hotfix$"; then
             RELEASE_TYPE="hotfix"
-            PATCH=$((PATCH + 1))
+            PATCH=$((PATCH + 1))   
             CHANGELOG_SECTION="Hotfix Release"
             BREAKING_CHANGES="false"
           else
             echo "No release label found. Checking commits"
-            COMMIT_MSGS=$(git log $COMMIT_RANGE --no-merges --pretty=%B -n 1 || echo "")
+            COMMIT_MSGS=$(git log $COMMIT_RANGE --no-merges --pretty=%B -n 20 || echo "")
             if echo "$COMMIT_MSGS" | grep -E "^(chore|hotfix):" | grep -v "\[skip-chore\]" > /dev/null; then
               RELEASE_TYPE="hotfix"
               PATCH=$((PATCH + 1))
@@ -154,15 +154,41 @@ jobs:
           echo "SHORT_COMMIT_SHA=$SHORT_COMMIT_SHA" >> $GITHUB_ENV
           echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
 
-          # Collect commit message as a single entry
+          # Collect commit messages
           COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
           if [[ "$COMMIT_MSG" =~ $'\n' ]]; then
+            # Multi-line commit message
             FORMATTED_MSG=$(echo "$COMMIT_MSG" | sed 's/^/- /' || echo "$COMMIT_MSG")
+            echo "FORMATTED_MSG=$FORMATTED_MSG" >> $GITHUB_ENV
+            echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
+            echo "$FORMATTED_MSG" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "BREAKING_COMMITS=" >> $GITHUB_ENV
           else
-            FORMATTED_MSG="- $COMMIT_MSG"
+            # Single-line commit message, process all commits
+            COMMITS=$(git log $COMMIT_RANGE --no-merges --pretty="%h %s" -n 20 || echo "")
+            BREAKING_MD=""
+            OTHER_MD=""
+            while IFS=' ' read -r SHA MSG; do
+              CLEAN_MSG=$(echo "$MSG" | sed -E 's/^(feat!?:|fix:|hotfix:|docs:|style:|refactor:|perf:|test:|chore:)//')
+              if [ -n "$CLEAN_MSG" ]; then
+                FORMATTED_MD="- $CLEAN_MSG [$SHA](https://github.com/${{ env.REPO }}/commit/$SHA)"
+                if echo "$MSG" | grep -q "^feat!:"; then
+                  BREAKING_MD="$BREAKING_MD\n$FORMATTED_MD"
+                else
+                  OTHER_MD="$OTHER_MD\n$FORMATTED_MD"
+                fi
+              fi
+            done <<< "$COMMITS"
+            BREAKING_MD=$(echo -e "$BREAKING_MD" | sed '/^$/d')
+            OTHER_MD=$(echo -e "$OTHER_MD" | sed '/^$/d')
+            echo "BREAKING_COMMITS<<EOF" >> $GITHUB_ENV
+            echo "$BREAKING_MD" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
+            echo "$OTHER_MD" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
           fi
-          echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
-          echo "FORMATTED_MSG=$FORMATTED_MSG" >> $GITHUB_ENV
 
       # Generate changelog
       - name: Generate Changelog
@@ -174,16 +200,16 @@ jobs:
             echo ""
             echo "${{ env.BARE_VERSION }} ($(TZ=${{ env.TIMEZONE }} date +%Y-%m-%d))"
             echo ""
-            if [ "${{ env.BREAKING_CHANGES }}" = "true" ]; then
+            if [ "${{ env.BREAKING_CHANGES }}" = "true" ] && [ -n "${{ env.BREAKING_COMMITS }}" ]; then
               echo "⚠ BREAKING CHANGES"
               echo ""
-              echo "- Breaking changes from this release [${{ env.SHORT_COMMIT_SHA }}](https://github.com/${{ env.REPO }}/commit/${{ env.COMMIT_SHA }})"
+              echo "${{ env.BREAKING_COMMITS }}"
               echo ""
             fi
             echo "${{ env.CHANGELOG_SECTION }}"
             echo ""
-            if [ -n "${{ env.FORMATTED_MSG }}" ]; then
-              echo "${{ env.FORMATTED_MSG }}"
+            if [ -n "${{ env.OTHER_COMMITS }}" ]; then
+              echo "${{ env.OTHER_COMMITS }}"
             else
               echo "- No changes recorded for this release"
             fi
@@ -198,9 +224,9 @@ jobs:
           git add CHANGELOG.md
           git config user.name "${{ env.BOT_NAME }}"
           git config user.email "${{ env.BOT_EMAIL }}"
-          git commit -m "update changelog for ${{ env.NEW_VERSION }}" || echo "No changelog changes to commit"
+          git commit -m "update changelog for ${{ env.NEW_VERSION }}"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
-          git push origin main || echo "Push failed, possibly no changes"
+          git push origin main
 
       # Create source code zip
       - name: Create Source Code Zip
@@ -214,7 +240,7 @@ jobs:
       # Debug zip contents
       - name: Debug Zip Contents
         if: env.NEW_VERSION != ''
-        run: unzip -l "${ZIP_NAME}" || echo "Zip debug failed"
+        run: unzip -l "${ZIP_NAME}"
 
       # Create tag and release
       - name: Create Tag and Release
@@ -231,7 +257,7 @@ jobs:
           git config user.email "${{ env.BOT_EMAIL }}"
           git tag -a "${{ env.NEW_VERSION }}" -m "release ${{ env.NEW_VERSION }}"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
-          git push origin "${{ env.NEW_VERSION }}" || echo "Tag push failed"
+          git push origin "${{ env.NEW_VERSION }}"
 
           echo "Creating GitHub release..."
           {
@@ -239,16 +265,16 @@ jobs:
             echo ""
             echo "${{ env.BARE_VERSION }} ($(TZ=${{ env.TIMEZONE }} date +%Y-%m-%d))"
             echo ""
-            if [ "${{ env.BREAKING_CHANGES }}" = "true" ]; then
+            if [ "${{ env.BREAKING_CHANGES }}" = "true" ] && [ -n "${{ env.BREAKING_COMMITS }}" ]; then
               echo "⚠ BREAKING CHANGES"
               echo ""
-              echo "- Breaking changes from this release [${{ env.SHORT_COMMIT_SHA }}](https://github.com/${{ env.REPO }}/commit/${{ env.COMMIT_SHA }})"
+              echo "${{ env.BREAKING_COMMITS }}"
               echo ""
             fi
             echo "${{ env.CHANGELOG_SECTION }}"
             echo ""
-            if [ -n "${{ env.FORMATTED_MSG }}" ]; then
-              echo "${{ env.FORMATTED_MSG }}"
+            if [ -n "${{ env.OTHER_COMMITS }}" ]; then
+              echo "${{ env.OTHER_COMMITS }}"
             else
               echo "- No changes recorded for this release"
             fi
@@ -256,4 +282,4 @@ jobs:
           GH_TOKEN=${{ secrets.PAT_TOKEN }} gh release create "${{ env.NEW_VERSION }}" \
             --title "Release: ${{ env.NEW_VERSION }}" \
             --notes-file release_notes.md \
-            "${{ env.ZIP_NAME }}#Clean Package" || echo "Release creation failed"
+            "${{ env.ZIP_NAME }}#Clean Package"
