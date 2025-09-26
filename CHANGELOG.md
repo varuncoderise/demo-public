@@ -1,3 +1,11 @@
+# v1.1.8
+
+1.1.8 (2025-09-26)
+
+Hotfix Release
+
+- fixed pipeline [b3ba4cb](https://github.com/varuncoderise/demo-public/commit/b3ba4cb)
+
 # v1.1.7
 
 1.1.7 (2025-09-26)
