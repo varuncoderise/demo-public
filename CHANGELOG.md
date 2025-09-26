@@ -1,3 +1,12 @@
+# v1.1.3
+
+1.1.3 (2025-09-26)
+
+Hotfix Release
+
+- Update CHANGELOG.md [b4f03fc](https://github.com/varuncoderise/demo-public/commit/b4f03fc)
+- # v1.1.4 [1dafc05](https://github.com/varuncoderise/demo-public/commit/1dafc05)
+
 # v1.1.2
 
 1.1.2 (2025-09-26)
