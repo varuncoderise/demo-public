@@ -1,3 +1,13 @@
+# v1.1.5
+
+1.1.5 (2025-09-26)
+
+Hotfix Release
+
+- Merge pull request #30 from varuncoderise/develop
+- 
+- fixed release for multiline commits
+
 # v1.1.4
 
 1.1.4 (2025-09-26)
