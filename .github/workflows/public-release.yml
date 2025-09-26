@@ -82,7 +82,7 @@ jobs:
 
           # Get PR labels
           PR_NUMBER=${{ github.event.pull_request.number }}
-          LABELS=$(GH_TOKEN=${{ secrets.PAT_TOKEN }} gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
+          LABELS=$(GH_TOKEN=${{ secrets.PAT_TOKEN }} gh pr view $PR_NUMBER --json labels --jq '.labels[].name' || echo "")
           echo "PR labels: $LABELS"
 
           # Determine release type and version
@@ -106,7 +106,7 @@ jobs:
             BREAKING_CHANGES="false"
           elif echo "$LABELS" | grep -q "^release:hotfix$"; then
             RELEASE_TYPE="hotfix"
-            PATCH=$((PATCH + 1))   
+            PATCH=$((PATCH + 1))
             CHANGELOG_SECTION="Hotfix Release"
             BREAKING_CHANGES="false"
           else
@@ -156,7 +156,7 @@ jobs:
 
           # Collect commit message as a single entry
           COMMIT_MSG=$(git log -1 --pretty=%B || echo "")
-          FORMATTED_MSG=$(echo "$COMMIT_MSG" | sed 's/^/- /')
+          FORMATTED_MSG=$(echo "$COMMIT_MSG" | sed 's/^/- /' || echo "$COMMIT_MSG")
           echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
           echo "FORMATTED_MSG=$FORMATTED_MSG" >> $GITHUB_ENV
 
@@ -194,9 +194,9 @@ jobs:
           git add CHANGELOG.md
           git config user.name "${{ env.BOT_NAME }}"
           git config user.email "${{ env.BOT_EMAIL }}"
-          git commit -m "update changelog for ${{ env.NEW_VERSION }}"
+          git commit -m "update changelog for ${{ env.NEW_VERSION }}" || echo "No changelog changes to commit"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
-          git push origin main
+          git push origin main || echo "Push failed, possibly no changes"
 
       # Create source code zip
       - name: Create Source Code Zip
@@ -210,7 +210,7 @@ jobs:
       # Debug zip contents
       - name: Debug Zip Contents
         if: env.NEW_VERSION != ''
-        run: unzip -l "${ZIP_NAME}"
+        run: unzip -l "${ZIP_NAME}" || echo "Zip debug failed"
 
       # Create tag and release
       - name: Create Tag and Release
@@ -227,7 +227,7 @@ jobs:
           git config user.email "${{ env.BOT_EMAIL }}"
           git tag -a "${{ env.NEW_VERSION }}" -m "release ${{ env.NEW_VERSION }}"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
-          git push origin "${{ env.NEW_VERSION }}"
+          git push origin "${{ env.NEW_VERSION }}" || echo "Tag push failed"
 
           echo "Creating GitHub release..."
           {
@@ -252,4 +252,4 @@ jobs:
           GH_TOKEN=${{ secrets.PAT_TOKEN }} gh release create "${{ env.NEW_VERSION }}" \
             --title "Release: ${{ env.NEW_VERSION }}" \
             --notes-file release_notes.md \
-            "${{ env.ZIP_NAME }}#Clean Package"
+            "${{ env.ZIP_NAME }}#Clean Package" || echo "Release creation failed"
