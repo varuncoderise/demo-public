@@ -158,7 +158,7 @@ jobs:
           COMMIT_MSG=$(git log -1 --no-merges --pretty=%B || echo "")
           if [[ "$COMMIT_MSG" =~ $'\n' ]]; then
             # Multi-line commit message
-            FORMATTED_MD=$(echo "$COMMIT_MSG" | sed 's/^/- /')
+            FORMATTED_MD=$(echo "$COMMIT_MSG" | sed 's/^- /  /; s/^[^-]/- /')
             echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
             echo "$FORMATTED_MD" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
