@@ -1,3 +1,12 @@
+# v1.1.12
+
+1.1.12 (2025-09-27)
+
+Maintenance Release
+
+- Update version to 1.1.12 [bff5720](https://github.com/varuncoderise/demo-public/commit/bff5720)
+- pipeline [d306cf9](https://github.com/varuncoderise/demo-public/commit/d306cf9)
+
 # v1.1.11
 
 1.1.11 (2025-09-26)
