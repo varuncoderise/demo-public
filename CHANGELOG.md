@@ -1,3 +1,110 @@
+# v1.1.12
+
+1.1.12 (2025-09-27)
+
+Maintenance Release
+
+- Update version to 1.1.12 [bff5720](https://github.com/varuncoderise/demo-public/commit/bff5720)
+- pipeline [d306cf9](https://github.com/varuncoderise/demo-public/commit/d306cf9)
+
+# v1.1.11
+
+1.1.11 (2025-09-26)
+
+Maintenance Release
+
+-  test fix
+-  test pipeline
+
+# v1.1.10
+
+1.1.10 (2025-09-26)
+
+Maintenance Release
+
+-  test fix
+-  test pipeline
+
+# v1.1.9
+
+1.1.9 (2025-09-26)
+
+Maintenance Release
+
+- added private sync pipeline [a3caa37](https://github.com/varuncoderise/demo-public/commit/a3caa37)
+- added private sync pipeline [1468b02](https://github.com/varuncoderise/demo-public/commit/1468b02)
+
+# v1.1.8
+
+1.1.8 (2025-09-26)
+
+Hotfix Release
+
+- fixed pipeline [b3ba4cb](https://github.com/varuncoderise/demo-public/commit/b3ba4cb)
+
+# v1.1.7
+
+1.1.7 (2025-09-26)
+
+Maintenance Release
+
+- - Added pipelines
+- - Fixed bugs
+- - Added chatbot
+
+# v1.1.6
+
+1.1.6 (2025-09-26)
+
+Maintenance Release
+
+- fixed release [f0bb802](https://github.com/varuncoderise/demo-public/commit/f0bb802)
+
+# v1.1.5
+
+1.1.5 (2025-09-26)
+
+Hotfix Release
+
+- Merge pull request #30 from varuncoderise/develop
+- 
+- fixed release for multiline commits
+
+# v1.1.4
+
+1.1.4 (2025-09-26)
+
+Maintenance Release
+
+- Merge pull request #29 from varuncoderise/develop
+- 
+- fixed release for multiline commits
+
+# v1.1.3
+
+1.1.3 (2025-09-26)
+
+Hotfix Release
+
+- Update CHANGELOG.md [b4f03fc](https://github.com/varuncoderise/demo-public/commit/b4f03fc)
+- # v1.1.4 [1dafc05](https://github.com/varuncoderise/demo-public/commit/1dafc05)
+
+# v1.1.2
+
+1.1.2 (2025-09-26)
+
+Maintenance Release
+
+- - Added file - fixed bugs [b60b9d0](https://github.com/varuncoderise/demo-public/commit/b60b9d0)
+
+# v1.1.1
+
+1.1.1 (2025-09-25)
+
+Maintenance Release
+
+- No changes recorded for this release
+
 # v1.1.0
 
 1.1.0 (2025-09-25)
