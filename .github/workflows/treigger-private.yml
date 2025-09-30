@@ -12,6 +12,6 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.PAT_TOKEN }} 
-          repository: varuncoderise/demo-internal
+          repository: varuncoderise/demo-interna
           event-type: sync-request
           client-payload: '{"source_repo": "${{ github.repository }}", "source_ref": "main"}'
