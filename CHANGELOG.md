@@ -1,3 +1,13 @@
+# v1.1.13
+
+1.1.13 (2025-09-30)
+
+Maintenance Release
+
+- Update version to 1.1.13 [bfe4114](https://github.com/varuncoderise/demo-public/commit/bfe4114)
+-  public sync pipeline [5d48b98](https://github.com/varuncoderise/demo-public/commit/5d48b98)
+- - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [4674054](https://github.com/varuncoderise/demo-public/commit/4674054)
+
 # v1.1.12
 
 1.1.12 (2025-09-27)
