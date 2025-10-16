@@ -1,3 +1,17 @@
+# v1.1.15
+
+1.1.15 (2025-10-16)
+
+Maintenance Release
+
+- Update servv.php [1391cef](https://github.com/varuncoderise/demo-public/commit/1391cef)
+- Add comment for public sync testing [803e38c](https://github.com/varuncoderise/demo-public/commit/803e38c)
+- Fix typo in git add command for readme.txt [2bbcb65](https://github.com/varuncoderise/demo-public/commit/2bbcb65)
+- Create servv.php [9482c19](https://github.com/varuncoderise/demo-public/commit/9482c19)
+- Improved layout and responsiveness across sections Fixed event links, labels, and translations Enhanced filters, payments, and overall stability [f4239e6](https://github.com/varuncoderise/demo-public/commit/f4239e6)
+- Update servv.php [c6334b9](https://github.com/varuncoderise/demo-public/commit/c6334b9)
+- Modify public-release.yml to update stable tag [1444bef](https://github.com/varuncoderise/demo-public/commit/1444bef)
+
 # v1.1.14
 
 1.1.14 (2025-10-06)
