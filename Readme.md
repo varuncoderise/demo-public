@@ -11,6 +11,7 @@ Welcome to the **Amazing Project**! This repository showcases cutting-edge techn
 - 🔒 Secure and reliable
 - 🌐 Easy integration
 - 📦 Modular architecture
+- New Line
 
 ## License
 
