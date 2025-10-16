@@ -1,3 +1,12 @@
+# v1.1.16
+
+1.1.16 (2025-10-16)
+
+Maintenance Release
+
+- Update version and stable tag to 1.1.16 [4ce321c](https://github.com/varuncoderise/demo-public/commit/4ce321c)
+- Update public-release.yml [6774b24](https://github.com/varuncoderise/demo-public/commit/6774b24)
+
 # v1.1.15
 
 1.1.15 (2025-10-16)
