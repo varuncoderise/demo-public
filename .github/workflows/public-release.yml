@@ -38,7 +38,13 @@ jobs:
         run: |
           echo "Fetching tags"
           git fetch --tags --force
-          LAST_TAG=$(git tag --sort=-v:refname | head -n1 || echo "${{ env.DEFAULT_TAG }}")
+          
+          # Fetch latest valid tag matching vX.Y.Z
+          LAST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+          if [[ -z "$LAST_TAG" ]]; then
+            LAST_TAG="${{ env.DEFAULT_TAG }}"
+            echo "No valid tags found. Using DEFAULT_TAG: $LAST_TAG"
+          fi
           echo "Latest tag: $LAST_TAG"
 
           # Validate LAST_TAG format
@@ -52,9 +58,9 @@ jobs:
             echo "LAST_TAG $LAST_TAG exists."
             COMMIT_RANGE="${LAST_TAG}..HEAD"
           else
-            echo "First release scenario — setting version to DEFAULT_TAG: $DEFAULT_TAG"
-            echo "NEW_VERSION=$DEFAULT_TAG" >> $GITHUB_ENV
-            BARE_VERSION="${DEFAULT_TAG#v}"
+            echo "First release scenario — setting version to DEFAULT_TAG: $LAST_TAG"
+            echo "NEW_VERSION=$LAST_TAG" >> $GITHUB_ENV
+            BARE_VERSION="${LAST_TAG#v}"
             echo "BARE_VERSION=$BARE_VERSION" >> $GITHUB_ENV
             echo "RELEASE_TYPE=initial" >> $GITHUB_ENV
             echo "CHANGELOG_SECTION=Initial Release" >> $GITHUB_ENV
@@ -82,10 +88,10 @@ jobs:
           PATCH=${PATCH:-0}
           echo "Parsed version: MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
 
-          # Validate parsed values
+          # Validate parsed values with fallback
           if ! [[ "$MAJOR" =~ ^[0-9]+$ && "$MINOR" =~ ^[0-9]+$ && "$PATCH" =~ ^[0-9]+$ ]]; then
-            echo "Error: Invalid version components: MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
-            exit 1
+            echo "Error: Invalid version components: MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH. Using defaults."
+            MAJOR=1; MINOR=0; PATCH=0
           fi
 
           # --- Extract current versions robustly ---
@@ -154,7 +160,6 @@ jobs:
               git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
               git push origin main
               echo "Updated version and stable tag to $BARE_VERSION"
-              # After push, update TAG_ON_COMMIT to new HEAD if needed (but we tag pre-bump for cleanliness)
             else
               echo "No changes required, already at $BARE_VERSION"
             fi
