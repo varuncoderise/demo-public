@@ -162,7 +162,7 @@ jobs:
           echo "SHORT_COMMIT_SHA=$SHORT_COMMIT_SHA" >> $GITHUB_ENV
           echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
 
-          # Collect commit messages, excluding servv.php and readme.txt updates, as flat bullet points without heading
+          # Collect commit messages, excluding servv.php and readme.txt updates, as flat bullet points with correct SHA
           COMMITS=$(git log $COMMIT_RANGE --no-merges --pretty="%H %B" || echo "")
           ALL_COMMITS_MD=""
           while IFS=' ' read -r SHA FULL_MSG; do
@@ -170,11 +170,11 @@ jobs:
             if echo "$FULL_MSG" | grep -q "Update version and stable tag"; then
               continue
             fi
-            # Process all lines as bullet points, removing prefix and fixing SHA placement
+            # Process all lines as bullet points with SHA at end
+            CURRENT_SHA=$SHA
             while IFS= read -r LINE; do
               if [ -n "$LINE" ] && ! echo "$LINE" | grep -q "^Update version"; then
-                CLEAN_LINE=$(echo "$LINE" | sed -E 's/^(feat!?:|fix:|hotfix:|docs:|style:|refactor:|perf:|test:|chore:)//')
-                ALL_COMMITS_MD="$ALL_COMMITS_MD\n- $CLEAN_LINE [${SHA:0:7}](https://github.com/${{ env.REPO }}/commit/$SHA)"
+                ALL_COMMITS_MD="$ALL_COMMITS_MD\n- $LINE [${CURRENT_SHA:0:7}](https://github.com/${{ env.REPO }}/commit/$CURRENT_SHA)"
               fi
             done <<< "$FULL_MSG"$'\n'
           done <<< "$COMMITS"
