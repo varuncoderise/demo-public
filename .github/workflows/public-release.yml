@@ -80,74 +80,80 @@ jobs:
             exit 1
           fi
 
-            # --- Extract current versions robustly ---
-            CURRENT_VERSION=$(grep -i "Version:" servv.php | head -n1 | sed -E 's/.*Version:[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-            echo "Current version in PHP file: ${CURRENT_VERSION:-none}"
+          # --- Extract current versions robustly ---
+          CURRENT_VERSION=$(grep -i "Version:" servv.php | head -n1 | sed -E 's/.*Version:[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "Current version in PHP file: ${CURRENT_VERSION:-none}"
 
-            CURRENT_STABLE=$(grep -i "Stable tag:" readme.txt | head -n1 | sed -E 's/.*Stable tag:[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-            echo "Current Stable tag in readme.txt: ${CURRENT_STABLE:-none}"
+          CURRENT_STABLE=$(grep -i "Stable tag:" readme.txt | head -n1 | sed -E 's/.*Stable tag:[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo "Current Stable tag in readme.txt: ${CURRENT_STABLE:-none}"
 
-            # --- Determine release type and version ---
-            PR_NUMBER=${{ github.event.pull_request.number }}
-            LABELS=$(GH_TOKEN=${{ secrets.PAT_TOKEN }} gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
-            echo "PR labels: $LABELS"
+          # --- Determine release type and version ---
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          LABELS=$(GH_TOKEN=${{ secrets.PAT_TOKEN }} gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
+          echo "PR labels: $LABELS"
 
-            if echo "$LABELS" | grep -q "^release:major$"; then
-              RELEASE_TYPE="major"; MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0; CHANGELOG_SECTION="Feature Release"; BREAKING_CHANGES="true"
-            elif echo "$LABELS" | grep -q "^release:minor$"; then
-              RELEASE_TYPE="minor"; MINOR=$((MINOR + 1)); PATCH=0; CHANGELOG_SECTION="Feature Release"; BREAKING_CHANGES="false"
-            elif echo "$LABELS" | grep -q "^release:patch$"; then
-              RELEASE_TYPE="patch"; PATCH=$((PATCH + 1)); CHANGELOG_SECTION="Maintenance Release"; BREAKING_CHANGES="false"
-            elif echo "$LABELS" | grep -q "^release:hotfix$"; then
-              RELEASE_TYPE="hotfix"; PATCH=$((PATCH + 1)); CHANGELOG_SECTION="Hotfix Release"; BREAKING_CHANGES="false"
-            else
-              RELEASE_TYPE="none"; CHANGELOG_SECTION="Maintenance Release"; BREAKING_CHANGES="false"
+          if echo "$LABELS" | grep -q "^release:major$"; then
+            RELEASE_TYPE="major"; MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0; CHANGELOG_SECTION="Feature Release"; BREAKING_CHANGES="true"
+          elif echo "$LABELS" | grep -q "^release:minor$"; then
+            RELEASE_TYPE="minor"; MINOR=$((MINOR + 1)); PATCH=0; CHANGELOG_SECTION="Feature Release"; BREAKING_CHANGES="false"
+          elif echo "$LABELS" | grep -q "^release:patch$"; then
+            RELEASE_TYPE="patch"; PATCH=$((PATCH + 1)); CHANGELOG_SECTION="Maintenance Release"; BREAKING_CHANGES="false"
+          elif echo "$LABELS" | grep -q "^release:hotfix$"; then
+            RELEASE_TYPE="hotfix"; PATCH=$((PATCH + 1)); CHANGELOG_SECTION="Hotfix Release"; BREAKING_CHANGES="false"
+          else
+            RELEASE_TYPE="none"; CHANGELOG_SECTION="Maintenance Release"; BREAKING_CHANGES="false"
+          fi
+
+          echo "Release type: $RELEASE_TYPE"
+          echo "RELEASE_TYPE=$RELEASE_TYPE" >> $GITHUB_ENV
+          echo "BREAKING_CHANGES=$BREAKING_CHANGES" >> $GITHUB_ENV
+
+          if [ "$RELEASE_TYPE" != "none" ]; then
+            NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+            BARE_VERSION="$MAJOR.$MINOR.$PATCH"
+            echo "NEW_VERSION=$NEW_VERSION"
+            echo "BARE_VERSION=$BARE_VERSION"
+            # Validate NEW_VERSION format
+            if [[ ! "$NEW_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Error: Invalid version format for NEW_VERSION: $NEW_VERSION"
+              exit 1
+            fi
+            echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+            echo "BARE_VERSION=$BARE_VERSION" >> $GITHUB_ENV
+            echo "CHANGELOG_SECTION=$CHANGELOG_SECTION" >> $GITHUB_ENV
+
+            # --- Update servv.php and readme.txt together ---
+            CHANGED=false
+            if [ "$CURRENT_VERSION" != "$BARE_VERSION" ]; then
+              sed -i "s/Version:[[:space:]]*.*/Version: $BARE_VERSION/" servv.php
+              CHANGED=true
             fi
 
-            echo "Release type: $RELEASE_TYPE"
-            echo "RELEASE_TYPE=$RELEASE_TYPE" >> $GITHUB_ENV
-            echo "BREAKING_CHANGES=$BREAKING_CHANGES" >> $GITHUB_ENV
-
-            if [ "$RELEASE_TYPE" != "none" ]; then
-              NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
-              BARE_VERSION="$MAJOR.$MINOR.$PATCH"
-              echo "NEW_VERSION=$NEW_VERSION"
-              echo "BARE_VERSION=$BARE_VERSION"
-              echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-              echo "BARE_VERSION=$BARE_VERSION" >> $GITHUB_ENV
-              echo "CHANGELOG_SECTION=$CHANGELOG_SECTION" >> $GITHUB_ENV
-
-              # --- Update servv.php and readme.txt together ---
-              CHANGED=false
-              if [ "$CURRENT_VERSION" != "$BARE_VERSION" ]; then
-                sed -i "s/Version:[[:space:]]*.*/Version: $BARE_VERSION/" servv.php
-                CHANGED=true
-              fi
-
-              if [ "$CURRENT_STABLE" != "$BARE_VERSION" ]; then
-                if grep -q "Stable tag:" readme.txt; then
-                  sed -i "s/Stable tag:[[:space:]]*.*/Stable tag: $BARE_VERSION/" readme.txt
-                else
-                  echo "Stable tag: $BARE_VERSION" >> readme.txt
-                fi
-                CHANGED=true
-              fi
-
-              if [ "$CHANGED" = true ]; then
-                git config user.name "${{ env.BOT_NAME }}"
-                git config user.email "${{ env.BOT_EMAIL }}"
-                git add servv.php readme.txt
-                git commit -m "Update version and stable tag to $BARE_VERSION"
-                git push origin main
-                echo "Updated version and stable tag to $BARE_VERSION"
+            if [ "$CURRENT_STABLE" != "$BARE_VERSION" ]; then
+              if grep -q "Stable tag:" readme.txt; then
+                sed -i "s/Stable tag:[[:space:]]*.*/Stable tag: $BARE_VERSION/" readme.txt
               else
-                echo "No changes required, already at $BARE_VERSION"
+                echo "Stable tag: $BARE_VERSION" >> readme.txt
               fi
-            else
-              echo "No release will be created (RELEASE_TYPE=none)"
-              echo "NEW_VERSION=" >> $GITHUB_ENV
-              echo "BARE_VERSION=" >> $GITHUB_ENV
+              CHANGED=true
             fi
+
+            if [ "$CHANGED" = true ]; then
+              git config user.name "${{ env.BOT_NAME }}"
+              git config user.email "${{ env.BOT_EMAIL }}"
+              git add servv.php readme.txt
+              git commit -m "Update version and stable tag to $BARE_VERSION"
+              git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
+              git push origin main
+              echo "Updated version and stable tag to $BARE_VERSION"
+            else
+              echo "No changes required, already at $BARE_VERSION"
+            fi
+          else
+            echo "No release will be created (RELEASE_TYPE=none)"
+            echo "NEW_VERSION=" >> $GITHUB_ENV
+            echo "BARE_VERSION=" >> $GITHUB_ENV
+          fi
 
           # Get commit SHA
           COMMIT_SHA=$(git log -1 --no-merges --pretty=%H)
@@ -202,7 +208,7 @@ jobs:
             echo "${{ env.BARE_VERSION }} ($(TZ=${{ env.TIMEZONE }} date +%Y-%m-%d))"
             echo ""
             if [ "${{ env.BREAKING_CHANGES }}" = "true" ] && [ -n "${{ env.BREAKING_COMMITS }}" ]; then
-              echo "⚠ BREAKING CHANGES"
+              echo "BREAKING CHANGES"
               echo ""
               echo "${{ env.BREAKING_COMMITS }}"
               echo ""
@@ -243,7 +249,7 @@ jobs:
         if: env.NEW_VERSION != ''
         run: unzip -l "${ZIP_NAME}"
 
-      # Create tag and release
+            # Create tag and formatted release
       - name: Create Tag and Release
         if: env.NEW_VERSION != ''
         env:
@@ -251,35 +257,50 @@ jobs:
         run: |
           echo "Checking if tag ${{ env.NEW_VERSION }} exists..."
           if git rev-parse "${{ env.NEW_VERSION }}" >/dev/null 2>&1; then
-            echo "Error: Tag ${{ env.NEW_VERSION }} already exists."
+            echo "Tag ${{ env.NEW_VERSION }} already exists."
             exit 1
           fi
+
           git config user.name "${{ env.BOT_NAME }}"
           git config user.email "${{ env.BOT_EMAIL }}"
           git tag -a "${{ env.NEW_VERSION }}" -m "release ${{ env.NEW_VERSION }}"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
           git push origin "${{ env.NEW_VERSION }}"
 
-          echo "Creating GitHub release..."
+          echo "Generating formatted release notes..."
+
+          # Collect recent commits excluding housekeeping ones
+          COMMITS=$(git log ${{ env.LAST_TAG }}..HEAD --no-merges --pretty=format:"%h|%B" \
+            | grep -v -E "Update version|update changelog|update public-release|bump version" || true)
+
+          RELEASE_DATE=$(TZ=${{ env.TIMEZONE }} date +%Y-%m-%d)
+
           {
-            echo "# ${{ env.NEW_VERSION }}"
+            echo "Release: ${{ env.NEW_VERSION }}"
+            echo "${{ env.NEW_VERSION }}"
+            echo "${{ env.BARE_VERSION }} ($RELEASE_DATE)"
             echo ""
-            echo "${{ env.BARE_VERSION }} ($(TZ=${{ env.TIMEZONE }} date +%Y-%m-%d))"
-            echo ""
-            if [ "${{ env.BREAKING_CHANGES }}" = "true" ] && [ -n "${{ env.BREAKING_COMMITS }}" ]; then
-              echo "BREAKING CHANGES"
-              echo ""
-              echo "${{ env.BREAKING_COMMITS }}"
-              echo ""
-            fi
             echo "${{ env.CHANGELOG_SECTION }}"
             echo ""
-            if [ -n "${{ env.OTHER_COMMITS }}" ]; then
-              echo "${{ env.OTHER_COMMITS }}"
-            else
-              echo "- No changes recorded for this release"
-            fi
           } > release_notes.md
+
+          # Process commits (multi-line safe)
+          echo "$COMMITS" | while IFS='|' read -r SHA MSG; do
+            CLEAN_MSG=$(echo "$MSG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/^- //')
+            # Split multiline messages into separate lines, remove leading '- '
+            echo "$CLEAN_MSG" | while IFS= read -r LINE; do
+              [ -n "$LINE" ] && echo "$LINE $SHA" >> release_notes.md
+            done
+          done
+
+          # Add fallback if no commits were found
+          if ! grep -q '[0-9a-f]\{7\}$' release_notes.md; then
+            echo "- No significant commits in this release" >> release_notes.md
+          fi
+
+          echo "Final release notes:"
+          cat release_notes.md
+
           GH_TOKEN=${{ secrets.PAT_TOKEN }} gh release create "${{ env.NEW_VERSION }}" \
             --title "Release: ${{ env.NEW_VERSION }}" \
             --notes-file release_notes.md \
