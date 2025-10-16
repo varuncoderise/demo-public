@@ -1,3 +1,109 @@
+# v1.3.1
+
+1.3.1 (2025-10-16)
+
+Hotfix Release
+
+- Update version and stable tag to 1.3.1 [a0cd187](https://github.com/varuncoderise/demo-public/commit/a0cd187)
+- Fix typo in git add command for readme.txt 2bbcb65 Create servv.php 9482c19 Improved layout and responsiveness across sections Fixed event links, labels, and translations Enhanced filters, payments, and overall stability f4239e6 Update servv.php c6334b9 [be3b030](https://github.com/varuncoderise/demo-public/commit/be3b030)
+
+# v1.3.0
+
+1.3.0 (2025-10-16)
+
+Feature Release
+
+- Update version and stable tag to 1.3.0 [d09cdbe](https://github.com/varuncoderise/demo-public/commit/d09cdbe)
+- Update public-release.yml [dc7e572](https://github.com/varuncoderise/demo-public/commit/dc7e572)
+
+# v1.2.0
+
+1.2.0 (2025-10-16)
+
+Feature Release
+
+- Update version and stable tag to 1.2.0 [17ea5a9](https://github.com/varuncoderise/demo-public/commit/17ea5a9)
+- Update Readme with new line and placeholder [d1f4e90](https://github.com/varuncoderise/demo-public/commit/d1f4e90)
+- Update public-release.yml [12fad4c](https://github.com/varuncoderise/demo-public/commit/12fad4c)
+- Update public-release.yml [8a9b134](https://github.com/varuncoderise/demo-public/commit/8a9b134)
+- update changelog for v1.1.18 [0c358c5](https://github.com/varuncoderise/demo-public/commit/0c358c5)
+- update changelog for v1.1.18 [fa60652](https://github.com/varuncoderise/demo-public/commit/fa60652)
+- Update public-release.yml [d04bf78](https://github.com/varuncoderise/demo-public/commit/d04bf78)
+- Add new line to features in Readme [f980f9a](https://github.com/varuncoderise/demo-public/commit/f980f9a)
+- Update public-release.yml [aa8320e](https://github.com/varuncoderise/demo-public/commit/aa8320e)
+- update changelog for v1.1.18 [6fa5218](https://github.com/varuncoderise/demo-public/commit/6fa5218)
+- update changelog for v1.1.18 [90d610f](https://github.com/varuncoderise/demo-public/commit/90d610f)
+- update changelog for v1.1.18 [7a10602](https://github.com/varuncoderise/demo-public/commit/7a10602)
+- Update version and stable tag to 1.1.18 [f476632](https://github.com/varuncoderise/demo-public/commit/f476632)
+- - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [2b85e43](https://github.com/varuncoderise/demo-public/commit/2b85e43)
+- Refactor public-release.yml for clarity and efficiency [4c976ca](https://github.com/varuncoderise/demo-public/commit/4c976ca)
+
+# v1.1.18
+
+1.1.18 (2025-10-16)
+
+Maintenance Release
+
+- update changelog for v1.1.18 [fa60652](https://github.com/varuncoderise/demo-public/commit/fa60652)
+- Update public-release.yml [d04bf78](https://github.com/varuncoderise/demo-public/commit/d04bf78)
+- Add new line to features in Readme [f980f9a](https://github.com/varuncoderise/demo-public/commit/f980f9a)
+- Update public-release.yml [aa8320e](https://github.com/varuncoderise/demo-public/commit/aa8320e)
+- update changelog for v1.1.18 [6fa5218](https://github.com/varuncoderise/demo-public/commit/6fa5218)
+- update changelog for v1.1.18 [90d610f](https://github.com/varuncoderise/demo-public/commit/90d610f)
+- update changelog for v1.1.18 [7a10602](https://github.com/varuncoderise/demo-public/commit/7a10602)
+- Update version and stable tag to 1.1.18 [f476632](https://github.com/varuncoderise/demo-public/commit/f476632)
+- - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [2b85e43](https://github.com/varuncoderise/demo-public/commit/2b85e43)
+- Refactor public-release.yml for clarity and efficiency [4c976ca](https://github.com/varuncoderise/demo-public/commit/4c976ca)
+
+# v1.1.18
+
+1.1.18 (2025-10-16)
+
+Maintenance Release
+
+- Update public-release.yml [d04bf78](https://github.com/varuncoderise/demo-public/commit/d04bf78)
+- Add new line to features in Readme [f980f9a](https://github.com/varuncoderise/demo-public/commit/f980f9a)
+- Update public-release.yml [aa8320e](https://github.com/varuncoderise/demo-public/commit/aa8320e)
+- update changelog for v1.1.18 [6fa5218](https://github.com/varuncoderise/demo-public/commit/6fa5218)
+- update changelog for v1.1.18 [90d610f](https://github.com/varuncoderise/demo-public/commit/90d610f)
+- update changelog for v1.1.18 [7a10602](https://github.com/varuncoderise/demo-public/commit/7a10602)
+- Update version and stable tag to 1.1.18 [f476632](https://github.com/varuncoderise/demo-public/commit/f476632)
+- - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [2b85e43](https://github.com/varuncoderise/demo-public/commit/2b85e43)
+- Refactor public-release.yml for clarity and efficiency [4c976ca](https://github.com/varuncoderise/demo-public/commit/4c976ca)
+
+# v1.1.18
+
+1.1.18 (2025-10-16)
+
+Maintenance Release
+
+- update changelog for v1.1.18 [90d610f](https://github.com/varuncoderise/demo-public/commit/90d610f)
+- update changelog for v1.1.18 [7a10602](https://github.com/varuncoderise/demo-public/commit/7a10602)
+- Update version and stable tag to 1.1.18 [f476632](https://github.com/varuncoderise/demo-public/commit/f476632)
+- - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [2b85e43](https://github.com/varuncoderise/demo-public/commit/2b85e43)
+- Refactor public-release.yml for clarity and efficiency [4c976ca](https://github.com/varuncoderise/demo-public/commit/4c976ca)
+
+# v1.1.18
+
+1.1.18 (2025-10-16)
+
+Maintenance Release
+
+- update changelog for v1.1.18 [7a10602](https://github.com/varuncoderise/demo-public/commit/7a10602)
+- Update version and stable tag to 1.1.18 [f476632](https://github.com/varuncoderise/demo-public/commit/f476632)
+- - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [2b85e43](https://github.com/varuncoderise/demo-public/commit/2b85e43)
+- Refactor public-release.yml for clarity and efficiency [4c976ca](https://github.com/varuncoderise/demo-public/commit/4c976ca)
+
+# v1.1.18
+
+1.1.18 (2025-10-16)
+
+Maintenance Release
+
+- Update version and stable tag to 1.1.18 [f476632](https://github.com/varuncoderise/demo-public/commit/f476632)
+- - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [2b85e43](https://github.com/varuncoderise/demo-public/commit/2b85e43)
+- Refactor public-release.yml for clarity and efficiency [4c976ca](https://github.com/varuncoderise/demo-public/commit/4c976ca)
+
 # v1.1.17
 
 1.1.17 (2025-10-16)
