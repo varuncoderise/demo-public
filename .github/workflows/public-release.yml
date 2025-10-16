@@ -162,44 +162,26 @@ jobs:
           echo "SHORT_COMMIT_SHA=$SHORT_COMMIT_SHA" >> $GITHUB_ENV
           echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
 
-          # Collect commit messages, excluding servv.php and readme.txt updates, optimized for multiline
+          # Collect commit messages, excluding servv.php and readme.txt updates, as flat bullet points
           COMMITS=$(git log $COMMIT_RANGE --no-merges --pretty="%H %B" || echo "")
-          BREAKING_MD=""
-          OTHER_MD=""
+          ALL_COMMITS_MD=""
           while IFS=' ' read -r SHA FULL_MSG; do
             # Skip version update commits
             if echo "$FULL_MSG" | grep -q "Update version and stable tag"; then
               continue
             fi
-            # Optimize multiline processing
-            FORMATTED_MD=""
-            FIRST_LINE=true
+            # Process all lines as bullet points
             while IFS= read -r LINE; do
-              if [ -n "$LINE" ]; then
-                if $FIRST_LINE; then
-                  FORMATTED_MD="- $(echo "$LINE" | sed -E 's/^(feat!?:|fix:|hotfix:|docs:|style:|refactor:|perf:|test:|chore:)//') [$SHA](https://github.com/${{ env.REPO }}/commit/$SHA)"
-                  FIRST_LINE=false
-                else
-                  FORMATTED_MD="$FORMATTED_MD\n  - $LINE"
-                fi
+              if [ -n "$LINE" ] && ! echo "$LINE" | grep -q "^Update version"; then
+                ALL_COMMITS_MD="$ALL_COMMITS_MD\n- $(echo "$LINE" | sed -E 's/^(feat!?:|fix:|hotfix:|docs:|style:|refactor:|perf:|test:|chore:)//') [$SHA](https://github.com/${{ env.REPO }}/commit/$SHA)"
               fi
             done <<< "$FULL_MSG"$'\n'
-            if [ -n "$FORMATTED_MD" ]; then
-              if echo "$FULL_MSG" | grep -q "^feat!:"; then
-                BREAKING_MD="$BREAKING_MD\n$FORMATTED_MD"
-              else
-                OTHER_MD="$OTHER_MD\n$FORMATTED_MD"
-              fi
-            fi
           done <<< "$COMMITS"
-          BREAKING_MD=$(echo -e "$BREAKING_MD" | sed '/^$/d' | tail -c +2)
-          OTHER_MD=$(echo -e "$OTHER_MD" | sed '/^$/d' | tail -c +2)
-          echo "BREAKING_COMMITS<<EOF" >> $GITHUB_ENV
-          echo "$BREAKING_MD" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          ALL_COMMITS_MD=$(echo -e "$ALL_COMMITS_MD" | sed '/^$/d' | tail -c +2)
           echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
-          echo "$OTHER_MD" >> $GITHUB_ENV
+          echo "$ALL_COMMITS_MD" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+          echo "BREAKING_COMMITS=" >> $GITHUB_ENV
 
       # Generate changelog
       - name: Generate Changelog
@@ -211,12 +193,6 @@ jobs:
             echo ""
             echo "${{ env.BARE_VERSION }} ($(TZ=${{ env.TIMEZONE }} date +%Y-%m-%d))"
             echo ""
-            if [ "${{ env.BREAKING_CHANGES }}" = "true" ] && [ -n "${{ env.BREAKING_COMMITS }}" ]; then
-              echo "BREAKING CHANGES"
-              echo ""
-              echo "${{ env.BREAKING_COMMITS }}"
-              echo ""
-            fi
             echo "${{ env.CHANGELOG_SECTION }}"
             echo ""
             if [ -n "${{ env.OTHER_COMMITS }}" ]; then
@@ -276,12 +252,6 @@ jobs:
             echo ""
             echo "${{ env.BARE_VERSION }} ($(TZ=${{ env.TIMEZONE }} date +%Y-%m-%d))"
             echo ""
-            if [ "${{ env.BREAKING_CHANGES }}" = "true" ] && [ -n "${{ env.BREAKING_COMMITS }}" ]; then
-              echo "BREAKING CHANGES"
-              echo ""
-              echo "${{ env.BREAKING_COMMITS }}"
-              echo ""
-            fi
             echo "${{ env.CHANGELOG_SECTION }}"
             echo ""
             if [ -n "${{ env.OTHER_COMMITS }}" ]; then
