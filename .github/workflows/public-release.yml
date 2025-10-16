@@ -155,29 +155,30 @@ jobs:
             echo "BARE_VERSION=" >> $GITHUB_ENV
           fi
 
-          # Get commit SHA
-          COMMIT_SHA=$(git log -1 --no-merges --pretty=%H)
-          SHORT_COMMIT_SHA=$(echo "$COMMIT_SHA" | cut -c1-7)
-          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
-          echo "SHORT_COMMIT_SHA=$SHORT_COMMIT_SHA" >> $GITHUB_ENV
-          echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
-
           # Collect commit messages, excluding servv.php and readme.txt updates, as flat bullet points with correct SHA
-          COMMITS=$(git log $COMMIT_RANGE --no-merges --pretty="%H %B" || echo "")
+          COMMITS=$(git log $COMMIT_RANGE --no-merges --pretty=format:"%H%n%B%n---COMMIT-END---" || echo "")
           ALL_COMMITS_MD=""
-          while IFS=' ' read -r SHA FULL_MSG; do
+          i=0
+          while [ $i -lt ${#COMMITS[@]} ]; do
+            SHA="${COMMITS[$i]}"; ((i++))
+            FULL_MSG=""
+            while [ $i -lt ${#COMMITS[@]} ] && [ "${COMMITS[$i]}" != "---COMMIT-END---" ]; do
+              FULL_MSG="$FULL_MSG${COMMITS[$i]}$'\n'"
+              ((i++))
+            done
+            ((i++))  # Skip delimiter
+
             # Skip version update commits
             if echo "$FULL_MSG" | grep -q "Update version and stable tag"; then
               continue
             fi
             # Process all lines as bullet points with SHA at end
-            CURRENT_SHA=$SHA
             while IFS= read -r LINE; do
               if [ -n "$LINE" ] && ! echo "$LINE" | grep -q "^Update version"; then
-                ALL_COMMITS_MD="$ALL_COMMITS_MD\n- $LINE [${CURRENT_SHA:0:7}](https://github.com/${{ env.REPO }}/commit/$CURRENT_SHA)"
+                ALL_COMMITS_MD="$ALL_COMMITS_MD\n- $LINE [$SHA:0:7](https://github.com/${{ env.REPO }}/commit/$SHA)"
               fi
-            done <<< "$FULL_MSG"$'\n'
-          done <<< "$COMMITS"
+            done <<< "$FULL_MSG"
+          done
           ALL_COMMITS_MD=$(echo -e "$ALL_COMMITS_MD" | sed '/^$/d' | tail -c +2)
           echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
           echo "$ALL_COMMITS_MD" >> $GITHUB_ENV
@@ -220,7 +221,7 @@ jobs:
       - name: Create Source Code Zip
         if: env.NEW_VERSION != ''
         run: |
-          REPO_NAME="servvai-event-booking"
+          REPO_NAME="servise-event-booking"
           ZIP_NAME="${REPO_NAME}-${{ env.NEW_VERSION }}.zip"
           git archive --format=zip --output="${ZIP_NAME}" HEAD $(git ls-files | grep -v '^\.' | grep -v '/\.')
           echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
