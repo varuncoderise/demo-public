@@ -162,40 +162,44 @@ jobs:
           echo "SHORT_COMMIT_SHA=$SHORT_COMMIT_SHA" >> $GITHUB_ENV
           echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
 
-          # Collect commit messages, excluding servv.php version updates
-          COMMIT_MSG=$(git log -1 --no-merges --pretty=%B || echo "")
-          if [[ "$COMMIT_MSG" =~ $'\n' ]]; then
-            # Multi-line commit message
-            FORMATTED_MD=$(echo "$COMMIT_MSG" | sed 's/^- /  /; s/^[^-]/- /' | grep -v "Update version to")
-            echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
-            echo "$FORMATTED_MD" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
-            echo "BREAKING_COMMITS=" >> $GITHUB_ENV
-          else
-            # Single-line commit message, process all commits
-            COMMITS=$(git log $COMMIT_RANGE --no-merges --pretty="%h %s" -n 20 || echo "")
-            BREAKING_MD=""
-            OTHER_MD=""
-            while IFS=' ' read -r SHA MSG; do
-              CLEAN_MSG=$(echo "$MSG" | sed -E 's/^(feat!?:|fix:|hotfix:|docs:|style:|refactor:|perf:|test:|chore:)//')
-              if [ -n "$CLEAN_MSG" ] && ! echo "$MSG" | grep -q "Update version to"; then
-                FORMATTED_MD="- $CLEAN_MSG [$SHA](https://github.com/${{ env.REPO }}/commit/$SHA)"
-                if echo "$MSG" | grep -q "^feat!:"; then
-                  BREAKING_MD="$BREAKING_MD\n$FORMATTED_MD"
+          # Collect commit messages, excluding servv.php and readme.txt updates, optimized for multiline
+          COMMITS=$(git log $COMMIT_RANGE --no-merges --pretty="%H %B" || echo "")
+          BREAKING_MD=""
+          OTHER_MD=""
+          while IFS=' ' read -r SHA FULL_MSG; do
+            # Skip version update commits
+            if echo "$FULL_MSG" | grep -q "Update version and stable tag"; then
+              continue
+            fi
+            # Optimize multiline processing
+            FORMATTED_MD=""
+            FIRST_LINE=true
+            while IFS= read -r LINE; do
+              if [ -n "$LINE" ]; then
+                if $FIRST_LINE; then
+                  FORMATTED_MD="- $(echo "$LINE" | sed -E 's/^(feat!?:|fix:|hotfix:|docs:|style:|refactor:|perf:|test:|chore:)//') [$SHA](https://github.com/${{ env.REPO }}/commit/$SHA)"
+                  FIRST_LINE=false
                 else
-                  OTHER_MD="$OTHER_MD\n$FORMATTED_MD"
+                  FORMATTED_MD="$FORMATTED_MD\n  - $LINE"
                 fi
               fi
-            done <<< "$COMMITS"
-            BREAKING_MD=$(echo -e "$BREAKING_MD" | sed '/^$/d')
-            OTHER_MD=$(echo -e "$OTHER_MD" | sed '/^$/d')
-            echo "BREAKING_COMMITS<<EOF" >> $GITHUB_ENV
-            echo "$BREAKING_MD" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
-            echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
-            echo "$OTHER_MD" >> $GITHUB_ENV
-            echo "EOF" >> $GITHUB_ENV
-          fi
+            done <<< "$FULL_MSG"$'\n'
+            if [ -n "$FORMATTED_MD" ]; then
+              if echo "$FULL_MSG" | grep -q "^feat!:"; then
+                BREAKING_MD="$BREAKING_MD\n$FORMATTED_MD"
+              else
+                OTHER_MD="$OTHER_MD\n$FORMATTED_MD"
+              fi
+            fi
+          done <<< "$COMMITS"
+          BREAKING_MD=$(echo -e "$BREAKING_MD" | sed '/^$/d' | tail -c +2)
+          OTHER_MD=$(echo -e "$OTHER_MD" | sed '/^$/d' | tail -c +2)
+          echo "BREAKING_COMMITS<<EOF" >> $GITHUB_ENV
+          echo "$BREAKING_MD" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
+          echo "$OTHER_MD" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       # Generate changelog
       - name: Generate Changelog
