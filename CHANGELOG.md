@@ -1,3 +1,13 @@
+# v1.1.18
+
+1.1.18 (2025-10-16)
+
+Maintenance Release
+
+- Update version and stable tag to 1.1.18 [f476632](https://github.com/varuncoderise/demo-public/commit/f476632)
+- - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [2b85e43](https://github.com/varuncoderise/demo-public/commit/2b85e43)
+- Refactor public-release.yml for clarity and efficiency [4c976ca](https://github.com/varuncoderise/demo-public/commit/4c976ca)
+
 # v1.1.17
 
 1.1.17 (2025-10-16)
