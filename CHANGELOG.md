@@ -1,3 +1,18 @@
+# v1.4.0
+
+1.4.0 (2025-10-16)
+
+Feature Release
+
+ Add new feature: User authentication [a1fe6a2](https://github.com/varuncoderise/demo-public/commit/a1fe6a2151986ebbdf11dfe9dfebb13c1b7dbe6c)
+- Implement login functionality [-](https://github.com/varuncoderise/demo-public/commit/-)
+- Add password hashing [-](https://github.com/varuncoderise/demo-public/commit/-)
+- Update UI with login form [-](https://github.com/varuncoderise/demo-public/commit/-)
+- minor bug in logout process [Fix](https://github.com/varuncoderise/demo-public/commit/Fix)
+- Subject line of the commit. [d33bc20](https://github.com/varuncoderise/demo-public/commit/d33bc20a0c32f551bf31fef01b23f1a2f4725f0a)
+- paragraph of the body. [First](https://github.com/varuncoderise/demo-public/commit/First)
+- paragraph of the body. [Second](https://github.com/varuncoderise/demo-public/commit/Second)
+
 # v1.3.7
 
 1.3.7 (2025-10-16)
