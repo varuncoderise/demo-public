@@ -1,3 +1,12 @@
+# v1.3.3
+
+1.3.3 (2025-10-16)
+
+Maintenance Release
+
+- Update version and stable tag to 1.3.3 [ce9fc5f](https://github.com/varuncoderise/demo-public/commit/ce9fc5f)
+- Subject line of the commit [f27ff86](https://github.com/varuncoderise/demo-public/commit/f27ff86)
+
 # v1.3.2
 
 1.3.2 (2025-10-16)
