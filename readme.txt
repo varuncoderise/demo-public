@@ -5,4 +5,3 @@ Requires at least: 6.0
 Tested up to: 6.8
 Stable tag: 1.3.1
 License: GPLv2 or later
-New Line
