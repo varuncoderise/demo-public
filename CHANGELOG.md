@@ -1,3 +1,16 @@
+# v1.3.4
+
+1.3.4 (2025-10-16)
+
+Maintenance Release
+
+ Subject line of the commit [e47b8dcde839f99266d477971cd4e801c45c41fc](https://github.com/varuncoderise/demo-public/commit/e47b8dcde839f99266d477971cd4e801c45c41fc)
+- paragraph of the body. [First](https://github.com/varuncoderise/demo-public/commit/First)
+- paragraph of the body. [Second](https://github.com/varuncoderise/demo-public/commit/Second)
+- Subject line of the commit [9447d1d3786fbdbaad747065e952a155e217b117](https://github.com/varuncoderise/demo-public/commit/9447d1d3786fbdbaad747065e952a155e217b117)
+- paragraph of the body. [First](https://github.com/varuncoderise/demo-public/commit/First)
+- paragraph of the body. [Second](https://github.com/varuncoderise/demo-public/commit/Second)
+
 # v1.3.3
 
 1.3.3 (2025-10-16)
