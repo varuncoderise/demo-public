@@ -248,7 +248,6 @@ jobs:
       - name: Debug Zip Contents
         if: env.NEW_VERSION != ''
         run: unzip -l "${ZIP_NAME}"
-
       - name: Create Tag and Release
         if: env.NEW_VERSION != ''
         env:
@@ -257,10 +256,9 @@ jobs:
           set -euo pipefail
           echo "=== Create Tag and Release: ${{ env.NEW_VERSION }} ==="
 
-          # ensure local repo has tags pushed earlier in this job
+          # ensure we have all tags locally
           git fetch --tags --no-recurse-submodules
 
-          # create tag and push
           echo "Checking if tag ${{ env.NEW_VERSION }} exists locally..."
           if git rev-parse "${{ env.NEW_VERSION }}" >/dev/null 2>&1; then
             echo "Tag ${{ env.NEW_VERSION }} already exists locally — aborting."
@@ -272,31 +270,30 @@ jobs:
           git tag -a "${{ env.NEW_VERSION }}" -m "release ${{ env.NEW_VERSION }}"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
           git push origin "${{ env.NEW_VERSION }}"
-          echo "Tag ${ { env.NEW_VERSION } } pushed."
+          echo "Tag ${{ env.NEW_VERSION }} pushed."
 
           echo "Generating formatted release notes..."
 
-          # Determine a safe commit range: prefer LAST_TAG if valid, otherwise fallback to last 20 commits
-          BASE_RANGE=""
-          if [ -n "${{ env.LAST_TAG:- }}" ] && git rev-parse "${{ env.LAST_TAG }}" >/dev/null 2>&1; then
-            BASE_RANGE="${{ env.LAST_TAG }}..HEAD"
+          # determine safe commit range
+          LAST_TAG="${LAST_TAG:-}"
+          if [ -n "$LAST_TAG" ] && git rev-parse "$LAST_TAG" >/dev/null 2>&1; then
+            BASE_RANGE="$LAST_TAG..HEAD"
             echo "Using commit range based on LAST_TAG: $BASE_RANGE"
           else
             BASE_RANGE="HEAD~20..HEAD"
             echo "LAST_TAG not available locally; falling back to last 20 commits: $BASE_RANGE"
           fi
 
-          # Get commits in a safe way; capture output and avoid failing on empty result
+          # collect commits safely
           set +e
           RAW_COMMITS=$(git log ${BASE_RANGE} --no-merges --pretty=format:"%h|%B" 2>/dev/null || true)
           set -e
 
-          # Filter out housekeeping commits (case-insensitive)
+          # filter out housekeeping commits (case-insensitive)
           FILTERED_COMMITS=$(echo "$RAW_COMMITS" | awk 'BEGIN{IGNORECASE=1} !/update version|update changelog|update public-release|bump version|update version and stable tag/ {print}')
 
-          RELEASE_DATE=$(TZ=${{ env.TIMEZONE }} date +%Y-%m-%d)
+          RELEASE_DATE=$(TZ=${TIMEZONE} date +%Y-%m-%d)
 
-          # Begin release notes file
           {
             echo "Release: ${{ env.NEW_VERSION }}"
             echo "${{ env.NEW_VERSION }}"
@@ -306,27 +303,13 @@ jobs:
             echo ""
           } > release_notes.md
 
-          # Process commits into release_notes.md
+          # process commits (multi-line safe)
           if [ -n "$FILTERED_COMMITS" ]; then
-            # Each commit entry is "%h|<body possibly multi-line>"
-            # We'll iterate commit-by-commit and split commit bodies into separate lines.
-            echo "$FILTERED_COMMITS" | awk -v RS="\n" 'BEGIN{FS="|"} { 
-              # Pass through ascii; print commit hash and remainder joined by placeholder
-              # We print a delimiter to be handled by the outer shell loop.
-              print $0
-            }' | while IFS='|' read -r SHA BODY; do
-              # Normalize CR/LF and trim
-              BODY="$(echo "$BODY" | sed -E 's/\r$//')"
-              # Remove leading/trailing whitespace, remove leading "- " if present
-              CLEAN_BODY="$(echo "$BODY" | sed -E 's/^[[:space:]]*//; s/[[:space:]]*$//; s/^- //')"
-              # If the body contains '-' separated lines, split them into separate lines
-              # We'll replace literal newlines inside BODY with a sentinel, then process each line.
-              echo "$CLEAN_BODY" | while IFS= read -r LINE; do
-                LINE_TRIM="$(echo "$LINE" | sed -E 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-                if [ -n "$LINE_TRIM" ]; then
-                  # Append SHA at the end
-                  echo "$LINE_TRIM $SHA" >> release_notes.md
-                fi
+            echo "$FILTERED_COMMITS" | while IFS='|' read -r SHA MSG; do
+              CLEAN_MSG=$(echo "$MSG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/^- //')
+              echo "$CLEAN_MSG" | while IFS= read -r LINE; do
+                LINE_TRIM=$(echo "$LINE" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                [ -n "$LINE_TRIM" ] && echo "$LINE_TRIM $SHA" >> release_notes.md
               done
             done
           else
@@ -337,7 +320,6 @@ jobs:
           cat release_notes.md
           echo "--------------------------------------"
 
-          # Create GitHub release using gh
           GH_TOKEN=${{ secrets.PAT_TOKEN }} gh release create "${{ env.NEW_VERSION }}" \
             --title "Release: ${{ env.NEW_VERSION }}" \
             --notes-file release_notes.md \
