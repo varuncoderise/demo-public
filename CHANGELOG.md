@@ -1,3 +1,30 @@
+# v1.3.2
+
+1.3.2 (2025-10-16)
+
+Maintenance Release
+
+- Update version and stable tag to 1.3.2 [2cbbdf1](https://github.com/varuncoderise/demo-public/commit/2cbbdf1)
+- Subject line of the commit [9a69cb1](https://github.com/varuncoderise/demo-public/commit/9a69cb1)
+- Subject line of the commit [b59e328](https://github.com/varuncoderise/demo-public/commit/b59e328)
+- Update version and stable tag to 1.4.0 [6c4021b](https://github.com/varuncoderise/demo-public/commit/6c4021b)
+- Subject line of the commit [88341bc](https://github.com/varuncoderise/demo-public/commit/88341bc)
+- Update version and stable tag to 1.3.2 [86e5524](https://github.com/varuncoderise/demo-public/commit/86e5524)
+- Subject line of the commit [83ff662](https://github.com/varuncoderise/demo-public/commit/83ff662)
+- Update version and stable tag to 1.3.2 [09aab1b](https://github.com/varuncoderise/demo-public/commit/09aab1b)
+- Subject line of the commit [8d7d095](https://github.com/varuncoderise/demo-public/commit/8d7d095)
+- Subject line of the commit [2c64b96](https://github.com/varuncoderise/demo-public/commit/2c64b96)
+- Update version and stable tag to 1.4.0 [2f9bbf2](https://github.com/varuncoderise/demo-public/commit/2f9bbf2)
+- Downgrade plugin version from 1.4.0 to 1.3.0 [666eebe](https://github.com/varuncoderise/demo-public/commit/666eebe)
+- Downgrade stable tag from 1.4.0 to 1.3.0 [3ac164c](https://github.com/varuncoderise/demo-public/commit/3ac164c)
+- Subject line of the commit [aa5b731](https://github.com/varuncoderise/demo-public/commit/aa5b731)
+- Subject line of the commit [873d063](https://github.com/varuncoderise/demo-public/commit/873d063)
+- Update version and stable tag to 1.4.0 [d3e1c8f](https://github.com/varuncoderise/demo-public/commit/d3e1c8f)
+- Subject line of the commit [91871cb](https://github.com/varuncoderise/demo-public/commit/91871cb)
+- Subject line of the commit [4fe1aa0](https://github.com/varuncoderise/demo-public/commit/4fe1aa0)
+- Update version and stable tag to 1.3.2 [f37b82b](https://github.com/varuncoderise/demo-public/commit/f37b82b)
+- Subject line of the commit [9cc5f98](https://github.com/varuncoderise/demo-public/commit/9cc5f98)
+
 # v1.3.1
 
 1.3.1 (2025-10-16)
