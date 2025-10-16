@@ -249,7 +249,7 @@ jobs:
         if: env.NEW_VERSION != ''
         run: unzip -l "${ZIP_NAME}"
 
-            - name: Create Tag and Release
+      - name: Create Tag and Release
         if: env.NEW_VERSION != ''
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
