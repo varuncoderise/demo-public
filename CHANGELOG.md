@@ -1,3 +1,13 @@
+# v1.3.7
+
+1.3.7 (2025-10-16)
+
+Maintenance Release
+
+ Subject line of the commit [ea35b84](https://github.com/varuncoderise/demo-public/commit/ea35b840eb756d0acd4923da674aa3fb5a5c92ad)
+- paragraph of the body. [First](https://github.com/varuncoderise/demo-public/commit/First)
+- paragraph of the body. [Second](https://github.com/varuncoderise/demo-public/commit/Second)
+
 # v1.3.6
 
 1.3.6 (2025-10-16)
