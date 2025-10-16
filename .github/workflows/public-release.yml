@@ -170,7 +170,7 @@ jobs:
               echo "Updating Stable tag in readme.txt to ${{ env.BARE_VERSION }}"
               sed -i "s/^Stable tag: .*/Stable tag: ${{ env.BARE_VERSION }}/" readme.txt
               CHANGED=true
-              git add sreadme.txt
+              git add readme.txt
               git commit -m "Update version to $BARE_VERSION"
               git push origin main
               echo "Version updated to $BARE_VERSION in readme.txt"
