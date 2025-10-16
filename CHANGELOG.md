@@ -4,6 +4,18 @@
 
 Maintenance Release
 
+- update changelog for v1.1.18 [90d610f](https://github.com/varuncoderise/demo-public/commit/90d610f)
+- update changelog for v1.1.18 [7a10602](https://github.com/varuncoderise/demo-public/commit/7a10602)
+- Update version and stable tag to 1.1.18 [f476632](https://github.com/varuncoderise/demo-public/commit/f476632)
+- - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [2b85e43](https://github.com/varuncoderise/demo-public/commit/2b85e43)
+- Refactor public-release.yml for clarity and efficiency [4c976ca](https://github.com/varuncoderise/demo-public/commit/4c976ca)
+
+# v1.1.18
+
+1.1.18 (2025-10-16)
+
+Maintenance Release
+
 - update changelog for v1.1.18 [7a10602](https://github.com/varuncoderise/demo-public/commit/7a10602)
 - Update version and stable tag to 1.1.18 [f476632](https://github.com/varuncoderise/demo-public/commit/f476632)
 - - Improved layout and responsiveness across sections - Fixed event links, labels, and translations - Enhanced filters, payments, and overall stability [2b85e43](https://github.com/varuncoderise/demo-public/commit/2b85e43)
