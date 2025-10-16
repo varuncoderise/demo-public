@@ -248,6 +248,7 @@ jobs:
       - name: Debug Zip Contents
         if: env.NEW_VERSION != ''
         run: unzip -l "${ZIP_NAME}"
+
       - name: Create Tag and Release
         if: env.NEW_VERSION != ''
         env:
@@ -256,7 +257,7 @@ jobs:
           set -euo pipefail
           echo "=== Create Tag and Release: ${{ env.NEW_VERSION }} ==="
 
-          # ensure we have all tags locally
+          # Ensure we have all tags locally
           git fetch --tags --no-recurse-submodules
 
           echo "Checking if tag ${{ env.NEW_VERSION }} exists locally..."
@@ -265,8 +266,11 @@ jobs:
             exit 1
           fi
 
+          # Configure Git
           git config user.name "${{ env.BOT_NAME }}"
           git config user.email "${{ env.BOT_EMAIL }}"
+
+          # Create and push tag
           git tag -a "${{ env.NEW_VERSION }}" -m "release ${{ env.NEW_VERSION }}"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
           git push origin "${{ env.NEW_VERSION }}"
@@ -274,7 +278,7 @@ jobs:
 
           echo "Generating formatted release notes..."
 
-          # determine safe commit range
+          # Determine safe commit range
           LAST_TAG="${LAST_TAG:-}"
           if [ -n "$LAST_TAG" ] && git rev-parse "$LAST_TAG" >/dev/null 2>&1; then
             BASE_RANGE="$LAST_TAG..HEAD"
@@ -284,16 +288,17 @@ jobs:
             echo "LAST_TAG not available locally; falling back to last 20 commits: $BASE_RANGE"
           fi
 
-          # collect commits safely
+          # Collect commits safely
           set +e
           RAW_COMMITS=$(git log ${BASE_RANGE} --no-merges --pretty=format:"%h|%B" 2>/dev/null || true)
           set -e
 
-          # filter out housekeeping commits (case-insensitive)
+          # Filter out housekeeping commits (case-insensitive)
           FILTERED_COMMITS=$(echo "$RAW_COMMITS" | awk 'BEGIN{IGNORECASE=1} !/update version|update changelog|update public-release|bump version|update version and stable tag/ {print}')
 
           RELEASE_DATE=$(TZ=${TIMEZONE} date +%Y-%m-%d)
 
+          # Initialize release_notes.md
           {
             echo "Release: ${{ env.NEW_VERSION }}"
             echo "${{ env.NEW_VERSION }}"
@@ -303,15 +308,18 @@ jobs:
             echo ""
           } > release_notes.md
 
-          # process commits (multi-line safe)
+          # Process commits (multi-line safe)
           if [ -n "$FILTERED_COMMITS" ]; then
-            echo "$FILTERED_COMMITS" | while IFS='|' read -r SHA MSG; do
+            while IFS='|' read -r SHA MSG; do
+              # Clean message: trim spaces and remove leading dash
               CLEAN_MSG=$(echo "$MSG" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sed 's/^- //')
-              echo "$CLEAN_MSG" | while IFS= read -r LINE; do
+              while IFS= read -r LINE; do
                 LINE_TRIM=$(echo "$LINE" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-                [ -n "$LINE_TRIM" ] && echo "$LINE_TRIM $SHA" >> release_notes.md
-              done
-            done
+                if [ -n "$LINE_TRIM" ]; then
+                  echo "$LINE_TRIM [$SHA](https://github.com/${{ env.REPO }}/commit/$SHA)" >> release_notes.md
+                fi
+              done <<< "$CLEAN_MSG"
+            done <<< "$FILTERED_COMMITS"
           else
             echo "- No significant commits in this release" >> release_notes.md
           fi
@@ -320,6 +328,7 @@ jobs:
           cat release_notes.md
           echo "--------------------------------------"
 
+          # Create GitHub release
           GH_TOKEN=${{ secrets.PAT_TOKEN }} gh release create "${{ env.NEW_VERSION }}" \
             --title "Release: ${{ env.NEW_VERSION }}" \
             --notes-file release_notes.md \
