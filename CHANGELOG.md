@@ -1,3 +1,12 @@
+# v1.3.1
+
+1.3.1 (2025-10-16)
+
+Hotfix Release
+
+- Update version and stable tag to 1.3.1 [a0cd187](https://github.com/varuncoderise/demo-public/commit/a0cd187)
+- Fix typo in git add command for readme.txt 2bbcb65 Create servv.php 9482c19 Improved layout and responsiveness across sections Fixed event links, labels, and translations Enhanced filters, payments, and overall stability f4239e6 Update servv.php c6334b9 [be3b030](https://github.com/varuncoderise/demo-public/commit/be3b030)
+
 # v1.3.0
 
 1.3.0 (2025-10-16)
