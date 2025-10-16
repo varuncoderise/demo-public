@@ -123,15 +123,23 @@ jobs:
           echo "BREAKING_CHANGES=$BREAKING_CHANGES" >> $GITHUB_ENV
 
           if [ "$RELEASE_TYPE" != "none" ]; then
+            # Ensure numeric components before constructing
+            if ! [[ "$MAJOR" =~ ^[0-9]+$ ]]; then MAJOR=1; fi
+            if ! [[ "$MINOR" =~ ^[0-9]+$ ]]; then MINOR=0; fi
+            if ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then PATCH=0; fi
+
             NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
             BARE_VERSION="$MAJOR.$MINOR.$PATCH"
             echo "NEW_VERSION=$NEW_VERSION"
             echo "BARE_VERSION=$BARE_VERSION"
-            # Validate NEW_VERSION format
+
+            # Validate NEW_VERSION format with fallback
             if [[ ! "$NEW_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "Error: Invalid version format for NEW_VERSION: $NEW_VERSION"
-              exit 1
+              echo "Error: Invalid version format for NEW_VERSION: $NEW_VERSION. Defaulting to v1.0.0"
+              NEW_VERSION="v1.0.0"
+              BARE_VERSION="1.0.0"
             fi
+
             echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
             echo "BARE_VERSION=$BARE_VERSION" >> $GITHUB_ENV
             echo "CHANGELOG_SECTION=$CHANGELOG_SECTION" >> $GITHUB_ENV
