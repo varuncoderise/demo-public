@@ -61,9 +61,17 @@ jobs:
             echo "BREAKING_CHANGES=false" >> $GITHUB_ENV
             echo "BREAKING_COMMITS=" >> $GITHUB_ENV
             echo "OTHER_COMMITS=" >> $GITHUB_ENV
+            echo "TAG_ON_COMMIT=HEAD" >> $GITHUB_ENV
             exit 0
           fi          
           echo "Commit range: $COMMIT_RANGE"
+
+          # --- Capture merge commit BEFORE any changes ---
+          MERGE_COMMIT_SHA=$(git rev-parse HEAD)
+          SHORT_MERGE_SHA="${MERGE_COMMIT_SHA:0:7}"
+          echo "MERGE_COMMIT_SHA=$MERGE_COMMIT_SHA" >> $GITHUB_ENV
+          echo "SHORT_MERGE_SHA=$SHORT_MERGE_SHA" >> $GITHUB_ENV
+          echo "TAG_ON_COMMIT=$MERGE_COMMIT_SHA" >> $GITHUB_ENV  # Tag here, pre-bump
 
           # Parse current version
           VERSION=${LAST_TAG#v}
@@ -146,6 +154,7 @@ jobs:
               git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
               git push origin main
               echo "Updated version and stable tag to $BARE_VERSION"
+              # After push, update TAG_ON_COMMIT to new HEAD if needed (but we tag pre-bump for cleanliness)
             else
               echo "No changes required, already at $BARE_VERSION"
             fi
@@ -155,15 +164,7 @@ jobs:
             echo "BARE_VERSION=" >> $GITHUB_ENV
           fi
 
-          # Get commit SHA
-          COMMIT_SHA=$(git log -1 --no-merges --pretty=%H)
-          SHORT_COMMIT_SHA=$(echo "$COMMIT_SHA" | cut -c1-7)
-          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
-          echo "SHORT_COMMIT_SHA=$SHORT_COMMIT_SHA" >> $GITHUB_ENV
-          echo "LAST_TAG=$LAST_TAG" >> $GITHUB_ENV
-
-          # --- Unified commit message collection (supports multiline bodies) ---
-          # Use git log to get all commits in range, including full bodies
+          # --- Unified commit message collection (supports multiline, uses actual SHAs) ---
           mapfile -t COMMIT_DETAILS < <(git log "$COMMIT_RANGE" --no-merges --pretty=format:"%H%n%s%n%b%n---COMMIT-END---" || echo "")
           
           BREAKING_MD=""
@@ -174,38 +175,32 @@ jobs:
             SHA="${COMMIT_DETAILS[$i]}"; ((i++))
             SUBJECT="${COMMIT_DETAILS[$i]}"; ((i++))
             
-            # Skip version update commits
+            # Skip version update commits (in case bump was in range)
             if echo "$SUBJECT" | grep -q "Update version"; then
-              # Skip body lines until delimiter
-              while [ $i -lt ${#COMMIT_DETAILS[@]} ] && [ "${COMMIT_DETAILS[$i]}" != "---COMMIT-END---" ]; do
-                ((i++))
-              done
+              while [ $i -lt ${#COMMIT_DETAILS[@]} ] && [ "${COMMIT_DETAILS[$i]}" != "---COMMIT-END---" ]; do ((i++)); done
               ((i++))
               continue
             fi
 
-            # Collect body lines until delimiter
+            # Collect body
             BODY=""
             while [ $i -lt ${#COMMIT_DETAILS[@]} ] && [ "${COMMIT_DETAILS[$i]}" != "---COMMIT-END---" ]; do
               BODY="$BODY${COMMIT_DETAILS[$i]}\n"
               ((i++))
             done
-            ((i++))  # Skip delimiter
+            ((i++))
 
-            # Detect conventional commit type and breaking change
-            TYPE=$(echo "$SUBJECT" | sed -E 's/^([a-z]+)(\([a-z]+\))?!?:.*/\1/')
+            # Conventional commit detection
             IS_BREAKING=false
-            if echo "$SUBJECT" | grep -q "!:" || echo "$SUBJECT $BODY" | grep -q "^BREAKING CHANGE:"; then
+            if echo "$SUBJECT" | grep -q "!:" || echo "$BODY" | grep -q "^BREAKING CHANGE:"; then
               IS_BREAKING=true
             fi
 
-            # Clean subject (remove type and scope)
             CLEAN_SUBJECT=$(echo "$SUBJECT" | sed -E 's/^[a-z]+(\([a-z]+\))?: //')
+            SHORT_SHA="${SHA:0:7}"
+            FORMATTED="- $CLEAN_SUBJECT [$SHORT_SHA](https://github.com/${{ env.REPO }}/commit/$SHA)"
 
-            # Format lines: subject first, then body lines (indented if needed)
-            FORMATTED="- $CLEAN_SUBJECT [$SHORT_COMMIT_SHA](https://github.com/${{ env.REPO }}/commit/$SHA)"
             if [ -n "$BODY" ]; then
-              # Add body lines, prefixed with "  " to indicate continuation
               while IFS= read -r line; do
                 if [ -n "$line" ] && ! echo "$line" | grep -q "^BREAKING CHANGE:"; then
                   FORMATTED="$FORMATTED\n  - $line"
@@ -220,8 +215,7 @@ jobs:
             fi
           done
 
-          # Clean up and export
-          BREAKING_MD=$(echo -e "$BREAKING_MD" | sed '/^$/d' | tail -c +2)  # Remove leading newline
+          BREAKING_MD=$(echo -e "$BREAKING_MD" | sed '/^$/d' | tail -c +2)
           OTHER_MD=$(echo -e "$OTHER_MD" | sed '/^$/d' | tail -c +2)
 
           echo "BREAKING_COMMITS<<EOF" >> $GITHUB_ENV
@@ -231,7 +225,7 @@ jobs:
           echo "$OTHER_MD" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      # Generate changelog
+      # Generate changelog (skips if no new version)
       - name: Generate Changelog
         if: env.NEW_VERSION != ''
         run: |
@@ -269,10 +263,11 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
           git push origin main
 
-      # Create source code zip
+      # Create source code zip (from merge commit)
       - name: Create Source Code Zip
         if: env.NEW_VERSION != ''
         run: |
+          git checkout ${{ env.MERGE_COMMIT_SHA }}  # Ensure zip is from pre-bump state
           REPO_NAME="servvai-event-booking"
           ZIP_NAME="${REPO_NAME}-${{ env.NEW_VERSION }}.zip"
           git archive --format=zip --output="${ZIP_NAME}" HEAD $(git ls-files | grep -v '^\.' | grep -v '/\.')
@@ -283,20 +278,14 @@ jobs:
         if: env.NEW_VERSION != ''
         run: unzip -l "${ZIP_NAME}"
 
-      # Create tag and release
+      # Create tag and release (on merge commit)
       - name: Create Tag and Release
         if: env.NEW_VERSION != ''
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          echo "Checking if tag ${{ env.NEW_VERSION }} exists..."
-          if git rev-parse "${{ env.NEW_VERSION }}" >/dev/null 2>&1; then
-            echo "Error: Tag ${{ env.NEW_VERSION }} already exists."
-            exit 1
-          fi
-          git config user.name "${{ env.BOT_NAME }}"
-          git config user.email "${{ env.BOT_EMAIL }}"
-          git tag -a "${{ env.NEW_VERSION }}" -m "release ${{ env.NEW_VERSION }}"
+          echo "Tagging on commit ${{ env.TAG_ON_COMMIT }}"
+          git tag -a "${{ env.NEW_VERSION }}" ${{ env.TAG_ON_COMMIT }} -m "release ${{ env.NEW_VERSION }}"
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ env.REPO }}.git
           git push origin "${{ env.NEW_VERSION }}"
 
@@ -323,4 +312,5 @@ jobs:
           GH_TOKEN=${{ secrets.PAT_TOKEN }} gh release create "${{ env.NEW_VERSION }}" \
             --title "Release: ${{ env.NEW_VERSION }}" \
             --notes-file release_notes.md \
+            --target ${{ env.TAG_ON_COMMIT }} \
             "${{ env.ZIP_NAME }}#Clean Package"
