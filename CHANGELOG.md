@@ -1,3 +1,12 @@
+# v1.3.0
+
+1.3.0 (2025-10-16)
+
+Feature Release
+
+- Update version and stable tag to 1.3.0 [d09cdbe](https://github.com/varuncoderise/demo-public/commit/d09cdbe)
+- Update public-release.yml [dc7e572](https://github.com/varuncoderise/demo-public/commit/dc7e572)
+
 # v1.2.0
 
 1.2.0 (2025-10-16)
