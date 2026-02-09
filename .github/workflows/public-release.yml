@@ -119,7 +119,8 @@ jobs:
           echo "Generating changelog"
 
           # Generate commit messages, excluding commits that only modify specific files
-          COMMITS=$(git log ${{ env.COMMIT_RANGE }} --pretty=format:"%H" --no-merges | while read -r hash; do
+          COMMITS=""
+          while read -r hash; do
             # Get files changed in this commit
             files=$(git diff-tree --no-commit-id --name-only -r "$hash")
             
@@ -137,17 +138,27 @@ jobs:
             
             # If commit modifies other files, include it
             if [ "$excluded" = false ]; then
-              # Get commit message and short hash
-              msg=$(git log -1 --pretty=format:"%s" "$hash")
+              # Get commit message (full message, could be multi-line)
+              msg=$(git log -1 --pretty=format:"%B" "$hash")
               short_hash=$(echo "$hash" | cut -c1-7)
               
-              # Remove leading dashes and trim whitespace
-              cleaned=$(echo "$msg" | sed 's/^[[:space:]]*-\+[[:space:]]*//')
-              
-              # Add single dash prefix
-              echo "- $cleaned ($short_hash)"
+              # Process each line of the commit message
+              while IFS= read -r line; do
+                # Skip empty lines
+                [[ -z "$line" ]] && continue
+                
+                # Remove leading dashes and trim whitespace
+                cleaned=$(echo "$line" | sed 's/^[[:space:]]*-\+[[:space:]]*//')
+                
+                # Add single dash prefix and append to COMMITS
+                if [ -n "$COMMITS" ]; then
+                  COMMITS="${COMMITS}"$'\n'"- $cleaned ($short_hash)"
+                else
+                  COMMITS="- $cleaned ($short_hash)"
+                fi
+              done <<< "$msg"
             fi
-          done)
+          done < <(git log ${{ env.COMMIT_RANGE }} --pretty=format:"%H" --no-merges)
           
           # Save commits to environment variable for use in release notes
           echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
