@@ -119,7 +119,12 @@ jobs:
           echo "Generating changelog"
 
           # Generate commit messages from the commit range, excluding specific files
-          COMMITS=$(git log ${{ env.COMMIT_RANGE }} --pretty=format:"- %s (%h)" --no-merges -- . ':(exclude).github/*' ':(exclude)CHANGELOG.md' ':(exclude)readme.txt' ':(exclude)servv.php')
+          COMMITS=$(git log ${{ env.COMMIT_RANGE }} --pretty=format:"%s (%h)" --no-merges -- . ':(exclude).github/*' ':(exclude)CHANGELOG.md' ':(exclude)readme.txt' ':(exclude)servv.php' | while read -r line; do
+            # Remove leading dashes and trim whitespace
+            cleaned=$(echo "$line" | sed 's/^[[:space:]]*-\+[[:space:]]*//')
+            # Add single dash prefix
+            echo "- $cleaned"
+          done)
           
           # Save commits to environment variable for use in release notes
           echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
