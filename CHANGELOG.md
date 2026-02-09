@@ -1,3 +1,11 @@
+# v1.5.2
+
+1.5.2 (2026-02-09)
+
+## Maintenance Release
+
+- Test pipeline (9cf09d3)
+
 # v1.5.1
 
 1.5.1 (2026-02-09)
