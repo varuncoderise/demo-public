@@ -1,3 +1,12 @@
+# v1.5.4
+
+1.5.4 (2026-02-09)
+
+## Maintenance Release
+
+- Test pipeline (ceab1f7)
+- Test Changes (ceab1f7)
+
 # v1.5.3
 
 1.5.3 (2026-02-09)
