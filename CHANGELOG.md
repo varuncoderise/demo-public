@@ -1,3 +1,15 @@
+# v1.4.1
+
+1.4.1 (2026-02-09)
+
+## Maintenance Release
+
+- Update version and stable tag to 1.4.1 (56b0f18)
+- - Improved layout and responsiveness across sections (1179d2f)
+- Update public-release.yml (2916d1c)
+- Update version and stable tag to 1.5.0 (be77c6a)
+- Add new feature: User authentication (283e5cd)
+
 # v1.4.0
 
 1.4.0 (2025-10-16)
