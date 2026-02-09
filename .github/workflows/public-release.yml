@@ -118,8 +118,8 @@ jobs:
         run: |
           echo "Generating changelog"
 
-          # Generate commit messages from the commit range
-          COMMITS=$(git log ${{ env.COMMIT_RANGE }} --pretty=format:"- %s (%h)" --no-merges)
+          # Generate commit messages from the commit range, excluding specific files
+          COMMITS=$(git log ${{ env.COMMIT_RANGE }} --pretty=format:"- %s (%h)" --no-merges -- . ':(exclude).github/*' ':(exclude)CHANGELOG.md' ':(exclude)readme.txt' ':(exclude)servv.php')
           
           # Save commits to environment variable for use in release notes
           echo "OTHER_COMMITS<<EOF" >> $GITHUB_ENV
