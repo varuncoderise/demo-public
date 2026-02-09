@@ -1,3 +1,11 @@
+# v1.5.1
+
+1.5.1 (2026-02-09)
+
+## Maintenance Release
+
+- ||Added new changes (5a27d2a)
+
 # v1.5.0
 
 1.5.0 (2026-02-09)
