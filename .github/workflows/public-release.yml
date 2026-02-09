@@ -119,7 +119,7 @@ jobs:
           echo "Generating changelog"
 
           # Generate commit messages, excluding commits that only modify specific files
-          COMMITS=$(git log ${{ env.COMMIT_RANGE }} --pretty=format:"%H|||%s" --no-merges | while IFS='|||' read -r hash msg; do
+          COMMITS=$(git log ${{ env.COMMIT_RANGE }} --pretty=format:"%H" --no-merges | while read -r hash; do
             # Get files changed in this commit
             files=$(git diff-tree --no-commit-id --name-only -r "$hash")
             
@@ -137,10 +137,13 @@ jobs:
             
             # If commit modifies other files, include it
             if [ "$excluded" = false ]; then
+              # Get commit message and short hash
+              msg=$(git log -1 --pretty=format:"%s" "$hash")
+              short_hash=$(echo "$hash" | cut -c1-7)
+              
               # Remove leading dashes and trim whitespace
               cleaned=$(echo "$msg" | sed 's/^[[:space:]]*-\+[[:space:]]*//')
-              # Get short hash
-              short_hash=$(echo "$hash" | cut -c1-7)
+              
               # Add single dash prefix
               echo "- $cleaned ($short_hash)"
             fi
