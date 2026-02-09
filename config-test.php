@@ -7,9 +7,6 @@ $lines = explode("\n",$env);
 test
 
 
-
-
-
 //testing public sync 
 foreach($lines as $line){
     preg_match("/([^#]+)\=(.*)/",$line,$matches);
