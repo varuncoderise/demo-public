@@ -118,12 +118,32 @@ jobs:
         run: |
           echo "Generating changelog"
 
-          # Generate commit messages from the commit range, excluding specific files
-          COMMITS=$(git log ${{ env.COMMIT_RANGE }} --pretty=format:"%s (%h)" --no-merges -- . ':(exclude).github/*' ':(exclude)CHANGELOG.md' ':(exclude)readme.txt' ':(exclude)servv.php' | while read -r line; do
-            # Remove leading dashes and trim whitespace
-            cleaned=$(echo "$line" | sed 's/^[[:space:]]*-\+[[:space:]]*//')
-            # Add single dash prefix
-            echo "- $cleaned"
+          # Generate commit messages, excluding commits that only modify specific files
+          COMMITS=$(git log ${{ env.COMMIT_RANGE }} --pretty=format:"%H|||%s" --no-merges | while IFS='|||' read -r hash msg; do
+            # Get files changed in this commit
+            files=$(git diff-tree --no-commit-id --name-only -r "$hash")
+            
+            # Check if commit only modifies excluded files
+            excluded=true
+            while IFS= read -r file; do
+              if [[ ! "$file" =~ ^\.github/ ]] && \
+                 [[ "$file" != "CHANGELOG.md" ]] && \
+                 [[ "$file" != "readme.txt" ]] && \
+                 [[ "$file" != "servv.php" ]]; then
+                excluded=false
+                break
+              fi
+            done <<< "$files"
+            
+            # If commit modifies other files, include it
+            if [ "$excluded" = false ]; then
+              # Remove leading dashes and trim whitespace
+              cleaned=$(echo "$msg" | sed 's/^[[:space:]]*-\+[[:space:]]*//')
+              # Get short hash
+              short_hash=$(echo "$hash" | cut -c1-7)
+              # Add single dash prefix
+              echo "- $cleaned ($short_hash)"
+            fi
           done)
           
           # Save commits to environment variable for use in release notes
