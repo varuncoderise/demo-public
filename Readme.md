@@ -2,7 +2,6 @@
 
 Welcome to the **Amazing Project**! This repository showcases cutting-edge technology and creative solutions.
 
-
 ## Features
 -Final test release coming from private
 -testing flow
@@ -11,18 +10,7 @@ Welcome to the **Amazing Project**! This repository showcases cutting-edge techn
 - ⚡ Lightning-fast performance
 - 🔒 Secure and reliable
 - 🌐 Easy integration
-
-
-
 - 📦 Modular architecture
-- New Line
-- jjjjj\\\
-- ppp
-
-
-- oooo
-=======
-
 
 ## License
 
